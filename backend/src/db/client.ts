@@ -35,3 +35,5 @@ pool.query('SELECT NOW()').then(() => {
 }).catch(err => {
   console.error('❌ Failed to connect to PostgreSQL:', err);
 });
+
+export { pool };

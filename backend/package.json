@@ -14,7 +14,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.10",
@@ -28,6 +27,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/pg": "^8.16.0"
+    "@types/pg": "^8.16.0",
+    "pino-pretty": "^13.1.3"
   }
 }
