@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db:create": "node-pg-migrate create",
+    "db:up": "tsx node-pg-migrate up",
+    "db:down": "tsx node-pg-migrate down",
+    "db:redo": "npm run db:down && npm run db:up",
+    "db:status": "node-pg-migrate status"
   },
   "keywords": [],
   "author": "",
