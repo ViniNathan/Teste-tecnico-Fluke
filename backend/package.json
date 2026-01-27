@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/api/server.ts",
     "db:create": "node-pg-migrate --migrations-dir src/db/migrations create",
-    "db:up": "tsx node-pg-migrate --migrations-dir src/db/migrations up",
-    "db:down": "tsx node-pg-migrate --migrations-dir src/db/migrations down",
+    "db:up": "node-pg-migrate --migrations-dir src/db/migrations up",
+    "db:down": "node-pg-migrate --migrations-dir src/db/migrations down",
     "db:redo": "npm run db:down && npm run db:up",
     "db:status": "node-pg-migrate --migrations-dir src/db/migrations status"
   },
