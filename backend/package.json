@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "tsx watch src/api/server.ts",
     "db:create": "node-pg-migrate create",
     "db:up": "tsx node-pg-migrate up",
     "db:down": "tsx node-pg-migrate down",
