@@ -9,5 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.17.2",
+    "pino": "^10.3.0",
+    "tsx": "^4.21.0",
+    "zod": "^4.3.6"
+  }
 }
