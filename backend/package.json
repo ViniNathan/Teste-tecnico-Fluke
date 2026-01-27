@@ -17,7 +17,7 @@
   "dependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.10",
-    "@types/pg": "^8.16.0",
+    "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.17.2",
@@ -25,5 +25,8 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.16.0"
   }
 }
