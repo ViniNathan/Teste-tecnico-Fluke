@@ -66,7 +66,7 @@ router.post(
 				const updateResult = await client.query(
 					`
         UPDATE events 
-        SET state = 'pending', replayed_at = NOW()
+        SET state = 'pending', replayed_at = NOW(), processing_started_at = NULL
         WHERE id = $1
         RETURNING id, external_id, type, state, replayed_at
         `,
@@ -117,7 +117,7 @@ router.post(
 				const result = await client.query(
 					`
         UPDATE events 
-        SET state = 'pending', replayed_at = NOW()
+        SET state = 'pending', replayed_at = NOW(), processing_started_at = NULL
         WHERE id = ANY($1::int[])
           AND state IN ('processed', 'failed')
         RETURNING id, external_id, state
