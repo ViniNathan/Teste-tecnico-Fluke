@@ -153,3 +153,8 @@ export const ruleIdSchema = z.string().regex(/^\d+$/).transform(Number);
 export const replayBatchSchema = z.object({
 	event_ids: z.array(z.number().int().positive()).min(1).max(100),
 });
+
+// Schema de requeue de eventos travados (POST /events/requeue-stuck)
+export const requeueStuckSchema = z.object({
+	older_than_seconds: z.number().int().positive().max(86400).optional(),
+});
