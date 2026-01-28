@@ -27,6 +27,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.13",
     "@types/pg": "^8.16.0",
     "pino-pretty": "^13.1.3"
   }
