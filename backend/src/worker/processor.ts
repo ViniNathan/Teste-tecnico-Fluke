@@ -79,7 +79,7 @@ const updateEventState = async (
 	await client.query(
 		`
       UPDATE events
-      SET state = $1, processed_at = NOW()
+      SET state = $1, processed_at = NOW(), processing_started_at = NULL
       WHERE id = $2
       `,
 		[state, eventId],
