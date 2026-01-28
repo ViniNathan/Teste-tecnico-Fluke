@@ -1,13 +1,13 @@
 // backend/src/api/middleware/errorHandler.ts
-import type { NextFunction, Request, Response } from "express";
-import { type core, ZodError } from "zod";
-import type { ErrorResponse, ValidationErrorDetail } from "../../types/api";
-import { AppError } from "../../utils/errors";
-import logger from "../../utils/logger";
+import type { NextFunction, Request, Response } from 'express';
+import { type core, ZodError } from 'zod';
+import type { ErrorResponse, ValidationErrorDetail } from '../../types/api';
+import { AppError } from '../../utils/errors';
+import logger from '../../utils/logger';
 
 function formatZodIssue(issue: core.$ZodIssue): ValidationErrorDetail {
 	return {
-		path: issue.path.join(".") || "root",
+		path: issue.path.join('.') || 'root',
 		message: issue.message,
 	};
 }
@@ -22,7 +22,7 @@ export function errorHandler(
 		return next(err);
 	}
 
-	const isDevelopment = process.env.NODE_ENV !== "production";
+	const isDevelopment = process.env.NODE_ENV !== 'production';
 
 	if (err instanceof ZodError) {
 		logger.warn(
@@ -31,12 +31,12 @@ export function errorHandler(
 				method: req.method,
 				validationErrors: err.issues,
 			},
-			"Validation error",
+			'Validation error',
 		);
 
 		const response: ErrorResponse = {
-			error: "ValidationError",
-			message: "Invalid request data",
+			error: 'ValidationError',
+			message: 'Invalid request data',
 			details: err.issues.map(formatZodIssue),
 		};
 
@@ -45,7 +45,7 @@ export function errorHandler(
 	}
 
 	if (err instanceof AppError) {
-		const logLevel = err.statusCode >= 500 ? "error" : "warn";
+		const logLevel = err.statusCode >= 500 ? 'error' : 'warn';
 
 		logger[logLevel](
 			{
@@ -55,7 +55,7 @@ export function errorHandler(
 				message: err.message,
 				isOperational: err.isOperational,
 			},
-			"Application error",
+			'Application error',
 		);
 
 		const response: ErrorResponse = {
@@ -80,12 +80,12 @@ export function errorHandler(
 				stack: err.stack,
 			},
 		},
-		"Unexpected error",
+		'Unexpected error',
 	);
 
 	const response: ErrorResponse = {
-		error: "InternalServerError",
-		message: isDevelopment ? err.message : "An unexpected error occurred",
+		error: 'InternalServerError',
+		message: isDevelopment ? err.message : 'An unexpected error occurred',
 		...(isDevelopment && { stack: err.stack }),
 	};
 
