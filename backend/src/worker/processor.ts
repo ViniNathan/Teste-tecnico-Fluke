@@ -1,25 +1,12 @@
 import type { PoolClient } from 'pg';
 import { pool } from '../db/client';
-import type { Action, Event, RuleExecutionResult } from '../domain/types';
+import type { Action, RuleExecutionResult } from '../domain/types';
+import type { ClaimedEvent, RuleRow } from '../types/worker';
 import { createLogger } from '../utils/logger';
 import { executeAction } from './actions';
 import { evaluateJsonLogic, parseJsonValue } from './ruleEngine';
 
 const processorLogger = createLogger({ module: 'processor' });
-
-type ClaimedEvent = {
-	event: Event;
-	attemptId: number;
-};
-
-type RuleRow = {
-	rule_id: number;
-	rule_name: string;
-	rule_version_id: number;
-	rule_version: number;
-	condition: unknown;
-	action: unknown;
-};
 
 const toErrorString = (error: unknown) => {
 	if (error instanceof Error) {
@@ -189,5 +176,3 @@ export const processClaimedEvent = async (claim: ClaimedEvent) => {
 		client.release();
 	}
 };
-
-export type { ClaimedEvent };
