@@ -1,67 +1,18 @@
 // backend/src/api/routes/rules.ts
-import { Router, Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import { pool } from '../../db/client';
 import {
-	NotFoundError,
-	ValidationError,
-	ConflictError,
-} from '../../utils/errors';
+	type NextFunction,
+	type Request,
+	type Response,
+	Router,
+} from 'express';
+import { pool } from '../../db/client';
+import { ruleCreateSchema, ruleUpdateSchema } from '../../domain/validators';
+import type { ListResponse } from '../../types/api';
+import { NotFoundError, ValidationError } from '../../utils/errors';
 import { createLogger } from '../../utils/logger';
-import { ListResponse } from '../../types/api';
 
 const router = Router();
 const rulesLogger = createLogger({ module: 'rules' });
-
-const sendEmailActionSchema = z.object({
-	type: z.literal('send_email'),
-	params: z.object({
-		to: z.email(),
-		subject: z.string().min(1),
-		template: z.string().min(1),
-		data: z.record(z.string(), z.any()).optional(),
-	}),
-});
-
-const callWebhookActionSchema = z.object({
-	type: z.literal('call_webhook'),
-	params: z.object({
-		url: z.url(),
-		method: z.enum(['POST', 'PUT', 'PATCH']),
-		headers: z.record(z.string(), z.string()).optional(),
-		body: z.record(z.string(), z.any()).optional(),
-	}),
-});
-
-const logActionSchema = z.object({
-	type: z.literal('log'),
-	params: z.object({
-		level: z.enum(['info', 'warn', 'error']),
-		message: z.string().min(1),
-	}),
-});
-
-const noopActionSchema = z.object({
-	type: z.literal('noop'),
-	params: z.object({}),
-});
-
-const actionSchema = z.discriminatedUnion('type', [
-	sendEmailActionSchema,
-	callWebhookActionSchema,
-	logActionSchema,
-	noopActionSchema,
-]);
-
-const ruleCreateSchema = z.object({
-	name: z.string().min(1).max(255),
-	event_type: z.string().min(1).max(100),
-	condition: z.string().min(1), // JSONPath expression
-	action: actionSchema,
-	active: z.boolean().optional().default(true),
-});
-
-const ruleUpdateSchema = ruleCreateSchema.partial();
 
 // POST /rules - cria uma nova regra
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
