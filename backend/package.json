@@ -9,7 +9,9 @@
 		"db:up": "node-pg-migrate --migrations-dir src/db/migrations up",
 		"db:down": "node-pg-migrate --migrations-dir src/db/migrations down",
 		"db:redo": "npm run db:down && npm run db:up",
-		"db:status": "node-pg-migrate --migrations-dir src/db/migrations status"
+		"db:status": "node-pg-migrate --migrations-dir src/db/migrations status",
+		"lint": "biome check .",
+		"lint:fix": "biome check . --write"
 	},
 	"keywords": [],
 	"author": "",
