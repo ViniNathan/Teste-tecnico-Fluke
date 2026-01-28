@@ -3,27 +3,27 @@ import {
 	type Request,
 	type Response,
 	Router,
-} from "express";
-import { pool } from "../../db/client";
-import { eventCreateSchema } from "../../domain/validators";
-import type { ListResponse } from "../../types/api";
-import { NotFoundError, ValidationError } from "../../utils/errors";
-import { createLogger } from "../../utils/logger";
+} from 'express';
+import { pool } from '../../db/client';
+import { eventCreateSchema } from '../../domain/validators';
+import type { ListResponse } from '../../types/api';
+import { NotFoundError, ValidationError } from '../../utils/errors';
+import { createLogger } from '../../utils/logger';
 
 const router = Router();
-const eventsLogger = createLogger({ module: "events" });
+const eventsLogger = createLogger({ module: 'events' });
 
 // POST /events - cria um novo evento
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		// Validação com Zod
 		const payload = eventCreateSchema.parse(req.body);
 
-		eventsLogger.debug({ payload }, "Creating event");
+		eventsLogger.debug({ payload }, 'Creating event');
 
 		const client = await pool.connect();
 		try {
-			await client.query("BEGIN");
+			await client.query('BEGIN');
 
 			const result = await client.query(
 				`
@@ -36,18 +36,18 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 				[payload.id, payload.type, payload.data],
 			);
 
-			await client.query("COMMIT");
+			await client.query('COMMIT');
 
 			const event = result.rows[0];
 
 			eventsLogger.info(
 				{ eventId: event.id, receivedCount: event.received_count },
-				"Event created",
+				'Event created',
 			);
 
 			res.status(201).json(event);
 		} catch (dbErr) {
-			await client.query("ROLLBACK");
+			await client.query('ROLLBACK');
 			throw dbErr;
 		} finally {
 			client.release();
@@ -58,15 +58,15 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // GET /events/:id - detalhes do evento
-router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const eventId = parseInt(req.params.id as string, 10);
 
 		if (isNaN(eventId)) {
-			throw new ValidationError("Invalid event ID");
+			throw new ValidationError('Invalid event ID');
 		}
 
-		const result = await pool.query("SELECT * FROM events WHERE id = $1", [
+		const result = await pool.query('SELECT * FROM events WHERE id = $1', [
 			eventId,
 		]);
 
@@ -81,11 +81,11 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // GET /events - lista eventos
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { state, type, limit = "50", offset = "0" } = req.query;
+		const { state, type, limit = '50', offset = '0' } = req.query;
 
-		let query = "SELECT * FROM events WHERE 1=1";
+		let query = 'SELECT * FROM events WHERE 1=1';
 		const params: any[] = [];
 		let paramIndex = 1;
 
@@ -119,13 +119,13 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 
 // GET /events/:id/attempts - histórico de tentativas para um evento
 router.get(
-	"/:id/attempts",
+	'/:id/attempts',
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const eventId = parseInt(req.params.id as string, 10);
 
 			if (isNaN(eventId)) {
-				throw new ValidationError("Invalid event ID");
+				throw new ValidationError('Invalid event ID');
 			}
 
 			// Buscar todas as tentativas com rule executions
