@@ -153,12 +153,3 @@ export const ruleIdSchema = z.string().regex(/^\d+$/).transform(Number);
 export const replayBatchSchema = z.object({
 	event_ids: z.array(z.number().int().positive()).min(1).max(100),
 });
-
-// Inferência de tipos TypeScript a partir dos schemas Zod
-export type EventCreateInput = z.infer<typeof eventCreateSchema>;
-export type EventFiltersInput = z.infer<typeof eventFiltersSchema>;
-export type RuleCreateInput = z.infer<typeof ruleCreateSchema>;
-export type RuleUpdateInput = z.infer<typeof ruleUpdateSchema>;
-export type RuleFiltersInput = z.infer<typeof ruleFiltersSchema>;
-export type ActionInput = z.infer<typeof actionSchema>;
-export type ReplayBatchInput = z.infer<typeof replayBatchSchema>;
