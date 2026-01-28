@@ -35,7 +35,8 @@ const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 		const updated = await client.query<Event>(
 			`
       UPDATE events
-      SET state = 'processing'
+      SET state = 'processing',
+          processing_started_at = NOW()
       WHERE id = $1
       RETURNING *
       `,
