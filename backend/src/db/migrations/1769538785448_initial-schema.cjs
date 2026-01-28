@@ -2,8 +2,8 @@
 
 exports.shorthands = undefined;
 
-exports.up = pgm => {
-  pgm.sql(`
+exports.up = (pgm) => {
+	pgm.sql(`
     -- ============================================
     -- EVENTS TABLE
     -- ============================================
@@ -96,9 +96,9 @@ exports.up = pgm => {
   `);
 };
 
-exports.down = pgm => {
-  // A ordem de drop é importante por causa das FKs
-  pgm.sql(`
+exports.down = (pgm) => {
+	// A ordem de drop é importante por causa das FKs
+	pgm.sql(`
     ALTER TABLE rules DROP CONSTRAINT IF EXISTS fk_current_version;
     DROP TABLE IF EXISTS rule_executions;
     DROP TABLE IF EXISTS rule_versions;
