@@ -1,7 +1,8 @@
 import { pool } from '../db/client';
 import type { Event } from '../domain/types';
+import type { ClaimedEvent } from '../types/worker';
 import { createLogger } from '../utils/logger';
-import { type ClaimedEvent, processClaimedEvent } from './processor';
+import { processClaimedEvent } from './processor';
 
 const workerLogger = createLogger({ module: 'worker' });
 
