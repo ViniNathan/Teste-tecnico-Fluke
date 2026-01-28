@@ -170,11 +170,6 @@ export type Action =
 	| LogAction
 	| NoopAction;
 
-// Verifica se ação é idempotente (segura para replay)
-export function isIdempotentAction(action: Action): boolean {
-	return action.type === 'log' || action.type === 'noop';
-}
-
 // TIPOS DE EXECUÇÃO DE REGRA
 
 // Resultado da execução da regra
@@ -201,40 +196,6 @@ export interface RuleExecutionWithDetails extends RuleExecution {
 	rule_version: number;
 	condition: JsonLogicExpression;
 	action: Action;
-}
-
-// AUXILIARES DE MÁQUINA DE ESTADO
-
-// Transições de estado válidas
-export const STATE_TRANSITIONS: Record<EventState, EventState[]> = {
-	pending: ['processing'],
-	processing: ['processed', 'failed'],
-	processed: ['pending'], // Replay
-	failed: ['pending'], // Replay
-};
-
-// Verifica se transição de estado é válida
-export function isValidStateTransition(
-	from: EventState,
-	to: EventState,
-): boolean {
-	return STATE_TRANSITIONS[from]?.includes(to) ?? false;
-}
-
-// Estados terminais (finalizam fluxo automático)
-export const TERMINAL_STATES: EventState[] = ['processed', 'failed'];
-
-// Verifica se estado é terminal
-export function isTerminalState(state: EventState): boolean {
-	return TERMINAL_STATES.includes(state);
-}
-
-// Estados que permitem replay manual
-export const REPLAYABLE_STATES: EventState[] = ['processed', 'failed'];
-
-// Verifica se evento pode sofrer replay
-export function isReplayableState(state: EventState): boolean {
-	return REPLAYABLE_STATES.includes(state);
 }
 
 // FILTROS DE CONSULTA
