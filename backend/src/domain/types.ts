@@ -15,7 +15,7 @@ export type JsonLogicExpression = { [key: string]: JsonValue } | JsonValue[];
 // - processing: sendo processado pelo worker
 // - processed: processado com sucesso
 // - failed: erro no processamento
-export type EventState = "pending" | "processing" | "processed" | "failed";
+export type EventState = 'pending' | 'processing' | 'processed' | 'failed';
 
 // Entidade de evento (banco de dados)
 // Imutável após criação (exceto estado).
@@ -46,7 +46,7 @@ export interface EventWithAttempts extends Event {
 // TIPOS DE TENTATIVA DE EVENTO
 
 // Status da tentativa: sucesso ou falha
-export type AttemptStatus = "success" | "failed";
+export type AttemptStatus = 'success' | 'failed';
 
 // Tentativa de processamento
 // Criada a cada execução (incluindo retries).
@@ -124,7 +124,7 @@ export interface BaseAction {
 // Ação de Enviar Email
 // AVISO: Não é idempotente! Replay envia duplicado.
 export interface SendEmailAction extends BaseAction {
-	type: "send_email";
+	type: 'send_email';
 	params: {
 		to: string; // Destinatário
 		subject: string; // Assuntos
@@ -136,10 +136,10 @@ export interface SendEmailAction extends BaseAction {
 // Ação de Webhook
 // AVISO: Não é idempotente sem suporte da API destino.
 export interface CallWebhookAction extends BaseAction {
-	type: "call_webhook";
+	type: 'call_webhook';
 	params: {
 		url: string;
-		method: "POST" | "PUT" | "PATCH";
+		method: 'POST' | 'PUT' | 'PATCH';
 		headers?: Record<string, string>;
 		body?: Record<string, any>;
 	};
@@ -148,9 +148,9 @@ export interface CallWebhookAction extends BaseAction {
 // Ação de Log
 // Idempotente: Seguro para replay.
 export interface LogAction extends BaseAction {
-	type: "log";
+	type: 'log';
 	params: {
-		level: "info" | "warn" | "error";
+		level: 'info' | 'warn' | 'error';
 		message: string;
 	};
 }
@@ -158,7 +158,7 @@ export interface LogAction extends BaseAction {
 // Ação No-op (faz nada)
 // Idempotente: Seguro para replay.
 export interface NoopAction extends BaseAction {
-	type: "noop";
+	type: 'noop';
 	params: Record<string, never>; // Objeto vazio
 }
 
@@ -172,7 +172,7 @@ export type Action =
 
 // Verifica se ação é idempotente (segura para replay)
 export function isIdempotentAction(action: Action): boolean {
-	return action.type === "log" || action.type === "noop";
+	return action.type === 'log' || action.type === 'noop';
 }
 
 // TIPOS DE EXECUÇÃO DE REGRA
@@ -181,7 +181,7 @@ export function isIdempotentAction(action: Action): boolean {
 // - applied: condição bateu, ação executada
 // - skipped: condição não bateu
 // - failed: erro na execução
-export type RuleExecutionResult = "applied" | "skipped" | "failed";
+export type RuleExecutionResult = 'applied' | 'skipped' | 'failed';
 
 // Registro de execução de regra
 // Rastreia regras avaliadas em cada tentativa.
@@ -207,10 +207,10 @@ export interface RuleExecutionWithDetails extends RuleExecution {
 
 // Transições de estado válidas
 export const STATE_TRANSITIONS: Record<EventState, EventState[]> = {
-	pending: ["processing"],
-	processing: ["processed", "failed"],
-	processed: ["pending"], // Replay
-	failed: ["pending"], // Replay
+	pending: ['processing'],
+	processing: ['processed', 'failed'],
+	processed: ['pending'], // Replay
+	failed: ['pending'], // Replay
 };
 
 // Verifica se transição de estado é válida
@@ -222,7 +222,7 @@ export function isValidStateTransition(
 }
 
 // Estados terminais (finalizam fluxo automático)
-export const TERMINAL_STATES: EventState[] = ["processed", "failed"];
+export const TERMINAL_STATES: EventState[] = ['processed', 'failed'];
 
 // Verifica se estado é terminal
 export function isTerminalState(state: EventState): boolean {
@@ -230,7 +230,7 @@ export function isTerminalState(state: EventState): boolean {
 }
 
 // Estados que permitem replay manual
-export const REPLAYABLE_STATES: EventState[] = ["processed", "failed"];
+export const REPLAYABLE_STATES: EventState[] = ['processed', 'failed'];
 
 // Verifica se evento pode sofrer replay
 export function isReplayableState(state: EventState): boolean {
