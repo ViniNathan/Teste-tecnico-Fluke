@@ -4,18 +4,18 @@ import {
 	type Request,
 	type Response,
 	Router,
-} from "express";
-import { pool } from "../../db/client";
-import { ruleCreateSchema, ruleUpdateSchema } from "../../domain/validators";
-import type { ListResponse } from "../../types/api";
-import { NotFoundError, ValidationError } from "../../utils/errors";
-import { createLogger } from "../../utils/logger";
+} from 'express';
+import { pool } from '../../db/client';
+import { ruleCreateSchema, ruleUpdateSchema } from '../../domain/validators';
+import type { ListResponse } from '../../types/api';
+import { NotFoundError, ValidationError } from '../../utils/errors';
+import { createLogger } from '../../utils/logger';
 
 const router = Router();
-const rulesLogger = createLogger({ module: "rules" });
+const rulesLogger = createLogger({ module: 'rules' });
 
 const parseJsonField = (value: unknown) => {
-	if (typeof value !== "string") {
+	if (typeof value !== 'string') {
 		return value;
 	}
 	try {
@@ -26,18 +26,18 @@ const parseJsonField = (value: unknown) => {
 };
 
 const toJsonParam = (value: unknown) =>
-	typeof value === "string" ? value : JSON.stringify(value);
+	typeof value === 'string' ? value : JSON.stringify(value);
 
 // POST /rules - cria uma nova regra
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const payload = ruleCreateSchema.parse(req.body);
 
-		rulesLogger.debug({ payload }, "Creating rule");
+		rulesLogger.debug({ payload }, 'Creating rule');
 
 		const client = await pool.connect();
 		try {
-			await client.query("BEGIN");
+			await client.query('BEGIN');
 
 			// 1. Cria a regra
 			const ruleResult = await client.query(
@@ -73,11 +73,11 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 				[version.id, rule.id],
 			);
 
-			await client.query("COMMIT");
+			await client.query('COMMIT');
 
 			rulesLogger.info(
 				{ ruleId: rule.id, versionId: version.id },
-				"Rule created",
+				'Rule created',
 			);
 
 			res.status(201).json({
@@ -89,7 +89,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 				},
 			});
 		} catch (dbErr) {
-			await client.query("ROLLBACK");
+			await client.query('ROLLBACK');
 			throw dbErr;
 		} finally {
 			client.release();
@@ -100,9 +100,9 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // GET /rules - lista todas as regras
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { active, event_type, limit = "50", offset = "0" } = req.query;
+		const { active, event_type, limit = '50', offset = '0' } = req.query;
 
 		let query = `
       SELECT 
@@ -122,7 +122,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 
 		if (active !== undefined) {
 			query += ` AND r.active = $${paramIndex++}`;
-			params.push(active === "true");
+			params.push(active === 'true');
 		}
 
 		if (event_type) {
@@ -167,12 +167,12 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // GET /rules/:id - detalhes da regra
-router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const ruleId = parseInt(req.params.id as string, 10);
 
 		if (isNaN(ruleId)) {
-			throw new ValidationError("Invalid rule ID");
+			throw new ValidationError('Invalid rule ID');
 		}
 
 		const result = await pool.query(
@@ -222,25 +222,25 @@ router.get("/:id", async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // PUT /rules/:id - atualiza uma regra
-router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const ruleId = parseInt(req.params.id as string, 10);
 
 		if (isNaN(ruleId)) {
-			throw new ValidationError("Invalid rule ID");
+			throw new ValidationError('Invalid rule ID');
 		}
 
 		const payload = ruleUpdateSchema.parse(req.body);
 
-		rulesLogger.debug({ ruleId, payload }, "Updating rule");
+		rulesLogger.debug({ ruleId, payload }, 'Updating rule');
 
 		const client = await pool.connect();
 		try {
-			await client.query("BEGIN");
+			await client.query('BEGIN');
 
 			// 1. Verifica se a regra existe
 			const existingRule = await client.query(
-				"SELECT * FROM rules WHERE id = $1",
+				'SELECT * FROM rules WHERE id = $1',
 				[ruleId],
 			);
 
@@ -275,7 +275,7 @@ router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
 				params.push(ruleId);
 
 				await client.query(
-					`UPDATE rules SET ${updates.join(", ")} WHERE id = $${paramIndex}`,
+					`UPDATE rules SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
 					params,
 				);
 			}
@@ -286,7 +286,7 @@ router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
 			if (payload.condition !== undefined || payload.action !== undefined) {
 				// Obtém a versão atual
 				const currentVersion = await client.query(
-					"SELECT * FROM rule_versions WHERE id = $1",
+					'SELECT * FROM rule_versions WHERE id = $1',
 					[rule.current_version_id],
 				);
 
@@ -321,11 +321,11 @@ router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
 						oldVersion: current.version,
 						newVersion: current.version + 1,
 					},
-					"Rule version created",
+					'Rule version created',
 				);
 			}
 
-			await client.query("COMMIT");
+			await client.query('COMMIT');
 
 			// 4. Obtém a regra atualizada
 			const updatedRule = await client.query(
@@ -362,7 +362,7 @@ router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
 				},
 			});
 		} catch (dbErr) {
-			await client.query("ROLLBACK");
+			await client.query('ROLLBACK');
 			throw dbErr;
 		} finally {
 			client.release();
@@ -374,13 +374,13 @@ router.put("/:id", async (req: Request, res: Response, next: NextFunction) => {
 
 // DELETE /rules/:id - desativa uma regra
 router.delete(
-	"/:id",
+	'/:id',
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const ruleId = parseInt(req.params.id as string, 10);
 
 			if (isNaN(ruleId)) {
-				throw new ValidationError("Invalid rule ID");
+				throw new ValidationError('Invalid rule ID');
 			}
 
 			const result = await pool.query(
@@ -397,10 +397,10 @@ router.delete(
 				throw new NotFoundError(`Rule with ID ${ruleId} not found`);
 			}
 
-			rulesLogger.info({ ruleId }, "Rule deactivated");
+			rulesLogger.info({ ruleId }, 'Rule deactivated');
 
 			res.json({
-				message: "Rule deactivated",
+				message: 'Rule deactivated',
 				rule: result.rows[0],
 			});
 		} catch (err) {
@@ -411,13 +411,13 @@ router.delete(
 
 // GET /rules/:id/versions - histórico de versões
 router.get(
-	"/:id/versions",
+	'/:id/versions',
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const ruleId = parseInt(req.params.id as string, 10);
 
 			if (isNaN(ruleId)) {
-				throw new ValidationError("Invalid rule ID");
+				throw new ValidationError('Invalid rule ID');
 			}
 
 			const result = await pool.query(
