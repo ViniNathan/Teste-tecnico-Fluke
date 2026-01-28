@@ -10,128 +10,129 @@ const eventsLogger = createLogger({ module: 'events' });
 
 // Schema de criação de evento
 const eventCreateSchema = z.object({
-  id: z.string().min(1).max(255),
-  type: z.string().min(1).max(100),
-  data: z.record(z.string(), z.any()),
+	id: z.string().min(1).max(255),
+	type: z.string().min(1).max(100),
+	data: z.record(z.string(), z.any()),
 });
 
 // POST /events - cria um novo evento
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // Validação com Zod
-    const payload = eventCreateSchema.parse(req.body);
+	try {
+		// Validação com Zod
+		const payload = eventCreateSchema.parse(req.body);
 
-    eventsLogger.debug({ payload }, 'Creating event');
+		eventsLogger.debug({ payload }, 'Creating event');
 
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
+		const client = await pool.connect();
+		try {
+			await client.query('BEGIN');
 
-      const result = await client.query(
-        `
+			const result = await client.query(
+				`
         INSERT INTO events (external_id, type, payload, state)
         VALUES ($1, $2, $3, 'pending')
         ON CONFLICT (external_id) 
         DO UPDATE SET received_count = events.received_count + 1
         RETURNING id, external_id, state, created_at, received_count
         `,
-        [payload.id, payload.type, payload.data]
-      );
+				[payload.id, payload.type, payload.data],
+			);
 
-      await client.query('COMMIT');
+			await client.query('COMMIT');
 
-      const event = result.rows[0];
+			const event = result.rows[0];
 
-      eventsLogger.info(
-        { eventId: event.id, receivedCount: event.received_count },
-        'Event created'
-      );
+			eventsLogger.info(
+				{ eventId: event.id, receivedCount: event.received_count },
+				'Event created',
+			);
 
-      res.status(201).json(event);
-    } catch (dbErr) {
-      await client.query('ROLLBACK');
-      throw dbErr;
-    } finally {
-      client.release();
-    }
-  } catch (err) {
-    next(err);
-  }
+			res.status(201).json(event);
+		} catch (dbErr) {
+			await client.query('ROLLBACK');
+			throw dbErr;
+		} finally {
+			client.release();
+		}
+	} catch (err) {
+		next(err);
+	}
 });
 
 // GET /events/:id - detalhes do evento
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const eventId = parseInt(req.params.id as string, 10);
+	try {
+		const eventId = parseInt(req.params.id as string, 10);
 
-    if (isNaN(eventId)) {
-      throw new ValidationError('Invalid event ID');
-    }
+		if (isNaN(eventId)) {
+			throw new ValidationError('Invalid event ID');
+		}
 
-    const result = await pool.query(
-      'SELECT * FROM events WHERE id = $1',
-      [eventId]
-    );
+		const result = await pool.query('SELECT * FROM events WHERE id = $1', [
+			eventId,
+		]);
 
-    if (result.rows.length === 0) {
-      throw new NotFoundError(`Event with ID ${eventId} not found`);
-    }
+		if (result.rows.length === 0) {
+			throw new NotFoundError(`Event with ID ${eventId} not found`);
+		}
 
-    res.json(result.rows[0]);
-  } catch (err) {
-    next(err);
-  }
+		res.json(result.rows[0]);
+	} catch (err) {
+		next(err);
+	}
 });
 
 // GET /events - lista eventos
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { state, type, limit = '50', offset = '0' } = req.query;
+	try {
+		const { state, type, limit = '50', offset = '0' } = req.query;
 
-    let query = 'SELECT * FROM events WHERE 1=1';
-    const params: any[] = [];
-    let paramIndex = 1;
+		let query = 'SELECT * FROM events WHERE 1=1';
+		const params: any[] = [];
+		let paramIndex = 1;
 
-    if (state) {
-      query += ` AND state = $${paramIndex++}`;
-      params.push(state);
-    }
+		if (state) {
+			query += ` AND state = $${paramIndex++}`;
+			params.push(state);
+		}
 
-    if (type) {
-      query += ` AND type = $${paramIndex++}`;
-      params.push(type);
-    }
+		if (type) {
+			query += ` AND type = $${paramIndex++}`;
+			params.push(type);
+		}
 
-    query += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
-    params.push(parseInt(limit as string, 10), parseInt(offset as string, 10));
+		query += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+		params.push(parseInt(limit as string, 10), parseInt(offset as string, 10));
 
-    const result = await pool.query(query, params);
+		const result = await pool.query(query, params);
 
-    const response: ListResponse<any> = {
-      data: result.rows,
-      count: result.rows.length,
-      limit: parseInt(limit as string, 10),
-      offset: parseInt(offset as string, 10),
-    };
+		const response: ListResponse<any> = {
+			data: result.rows,
+			count: result.rows.length,
+			limit: parseInt(limit as string, 10),
+			offset: parseInt(offset as string, 10),
+		};
 
-    res.json(response);
-  } catch (err) {
-    next(err);
-  }
+		res.json(response);
+	} catch (err) {
+		next(err);
+	}
 });
 
 // GET /events/:id/attempts - histórico de tentativas para um evento
-router.get('/:id/attempts', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const eventId = parseInt(req.params.id as string, 10);
+router.get(
+	'/:id/attempts',
+	async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const eventId = parseInt(req.params.id as string, 10);
 
-    if (isNaN(eventId)) {
-      throw new ValidationError('Invalid event ID');
-    }
+			if (isNaN(eventId)) {
+				throw new ValidationError('Invalid event ID');
+			}
 
-    // Buscar todas as tentativas com rule executions
-    const result = await pool.query(
-      `
+			// Buscar todas as tentativas com rule executions
+			const result = await pool.query(
+				`
       SELECT 
         ea.*,
         COALESCE(
@@ -154,20 +155,21 @@ router.get('/:id/attempts', async (req: Request, res: Response, next: NextFuncti
       GROUP BY ea.id
       ORDER BY ea.started_at DESC
       `,
-      [eventId]
-    );
+				[eventId],
+			);
 
-    const response: ListResponse<any> = {
-      data: result.rows,
-      count: result.rows.length,
-      limit: result.rows.length,
-      offset: 0,
-    };
+			const response: ListResponse<any> = {
+				data: result.rows,
+				count: result.rows.length,
+				limit: result.rows.length,
+				offset: 0,
+			};
 
-    res.json(response);
-  } catch (err) {
-    next(err);
-  }
-});
+			res.json(response);
+		} catch (err) {
+			next(err);
+		}
+	},
+);
 
 export { router as eventsRouter };
