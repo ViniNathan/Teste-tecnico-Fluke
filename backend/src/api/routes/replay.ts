@@ -1,10 +1,16 @@
 // backend/src/api/routes/replay.ts
-import { Router, Request, Response, NextFunction } from 'express';
-import { pool } from '../../db/client';
 import {
+	type NextFunction,
+	type Request,
+	type Response,
+	Router,
+} from 'express';
+import { pool } from '../../db/client';
+import { replayBatchSchema } from '../../domain/validators';
+import {
+	ConflictError,
 	NotFoundError,
 	ValidationError,
-	ConflictError,
 } from '../../utils/errors';
 import { createLogger } from '../../utils/logger';
 
@@ -99,21 +105,7 @@ router.post(
 	'/replay-batch',
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const { event_ids } = req.body;
-
-			if (!Array.isArray(event_ids) || event_ids.length === 0) {
-				throw new ValidationError('event_ids must be a non-empty array');
-			}
-
-			if (event_ids.length > 100) {
-				throw new ValidationError('Cannot replay more than 100 events at once');
-			}
-
-			// Valida se todos os IDs são números
-			const validIds = event_ids.every((id) => Number.isInteger(id));
-			if (!validIds) {
-				throw new ValidationError('All event_ids must be integers');
-			}
+			const { event_ids } = replayBatchSchema.parse(req.body);
 
 			replayLogger.info({ count: event_ids.length }, 'Batch replay requested');
 
