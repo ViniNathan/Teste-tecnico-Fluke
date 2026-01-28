@@ -5,7 +5,7 @@ import {
 	Router,
 } from 'express';
 import { pool } from '../../db/client';
-import { eventCreateSchema } from '../../domain/validators';
+import { eventCreateSchema, requeueStuckSchema } from '../../domain/validators';
 import type { ListResponse } from '../../types/api';
 import { NotFoundError, ValidationError } from '../../utils/errors';
 import { createLogger } from '../../utils/logger';
@@ -164,6 +164,53 @@ router.get(
 			};
 
 			res.json(response);
+		} catch (err) {
+			next(err);
+		}
+	},
+);
+
+// POST /events/requeue-stuck - requeue eventos presos em processing
+router.post(
+	'/requeue-stuck',
+	async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const payload = requeueStuckSchema.parse(req.body ?? {});
+			const timeoutSeconds = payload.older_than_seconds
+				? payload.older_than_seconds
+				: Number(process.env.PROCESSING_TIMEOUT_SECONDS ?? '300');
+
+			if (!Number.isFinite(timeoutSeconds) || timeoutSeconds <= 0) {
+				throw new ValidationError('Invalid processing timeout');
+			}
+
+			const result = await pool.query(
+				`
+        UPDATE events
+        SET state = 'pending',
+            processing_started_at = NULL
+        WHERE state = 'processing'
+          AND processing_started_at IS NOT NULL
+          AND processing_started_at < NOW() - ($1 || ' seconds')::interval
+        RETURNING id, external_id, type, state, processing_started_at
+        `,
+				[timeoutSeconds],
+			);
+
+			eventsLogger.warn(
+				{
+					requeued: result.rows.length,
+					timeoutSeconds,
+				},
+				'Requeued stuck events',
+			);
+
+			res.json({
+				message: 'Stuck events requeued',
+				timeout_seconds: timeoutSeconds,
+				requeued: result.rows.length,
+				events: result.rows,
+			});
 		} catch (err) {
 			next(err);
 		}
