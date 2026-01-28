@@ -5,6 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "tsx watch src/api/server.ts",
+		"worker": "tsx src/worker/runner.ts",
 		"db:create": "node-pg-migrate --migrations-dir src/db/migrations create",
 		"db:up": "node-pg-migrate --migrations-dir src/db/migrations up",
 		"db:down": "node-pg-migrate --migrations-dir src/db/migrations down",
@@ -21,6 +22,7 @@
 		"@types/node": "^25.0.10",
 		"dotenv": "^17.2.3",
 		"express": "^5.2.1",
+		"json-logic-js": "^2.0.5",
 		"node-pg-migrate": "^8.0.4",
 		"pg": "^8.17.2",
 		"pino": "^10.3.0",
