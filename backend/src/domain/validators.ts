@@ -1,4 +1,53 @@
-import { z } from 'zod';
+import { z } from "zod";
+
+const MAX_JSON_DEPTH = 20;
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+	return Object.prototype.toString.call(value) === "[object Object]";
+};
+
+const isJsonValue = (value: unknown, depth = 0): boolean => {
+	if (depth > MAX_JSON_DEPTH) {
+		return false;
+	}
+
+	if (value === null) {
+		return true;
+	}
+
+	const valueType = typeof value;
+
+	if (valueType === "string" || valueType === "boolean") {
+		return true;
+	}
+
+	if (valueType === "number") {
+		return Number.isFinite(value);
+	}
+
+	if (Array.isArray(value)) {
+		return value.every((item) => isJsonValue(item, depth + 1));
+	}
+
+	if (isPlainObject(value)) {
+		for (const entry of Object.entries(value)) {
+			if (!isJsonValue(entry[1], depth + 1)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	return false;
+};
+
+const jsonLogicSchema = z.custom(
+	(value) =>
+		isJsonValue(value) && (Array.isArray(value) || isPlainObject(value)),
+	{
+		message: "Condition must be a JSONLogic expression (object or array)",
+	},
+);
 
 // Schema de criação de evento (POST /events)
 export const eventCreateSchema = z.object({
@@ -9,10 +58,10 @@ export const eventCreateSchema = z.object({
 
 // Schema de filtro de estado de evento (GET /events?state=...)
 export const eventStateSchema = z.enum([
-	'pending',
-	'processing',
-	'processed',
-	'failed',
+	"pending",
+	"processing",
+	"processed",
+	"failed",
 ]);
 
 // Schema de filtro de eventos (GET /events)
@@ -28,7 +77,7 @@ export const eventIdSchema = z.string().regex(/^\d+$/).transform(Number);
 
 // Schema de ação de envio de email
 export const sendEmailActionSchema = z.object({
-	type: z.literal('send_email'),
+	type: z.literal("send_email"),
 	params: z.object({
 		to: z.string().email(),
 		subject: z.string().min(1),
@@ -39,10 +88,10 @@ export const sendEmailActionSchema = z.object({
 
 // Schema de ação de chamada de webhook
 export const callWebhookActionSchema = z.object({
-	type: z.literal('call_webhook'),
+	type: z.literal("call_webhook"),
 	params: z.object({
 		url: z.string().url(),
-		method: z.enum(['POST', 'PUT', 'PATCH']),
+		method: z.enum(["POST", "PUT", "PATCH"]),
 		headers: z.record(z.string(), z.string()).optional(),
 		body: z.record(z.string(), z.any()).optional(),
 	}),
@@ -50,21 +99,21 @@ export const callWebhookActionSchema = z.object({
 
 // Schema de ação de log
 export const logActionSchema = z.object({
-	type: z.literal('log'),
+	type: z.literal("log"),
 	params: z.object({
-		level: z.enum(['info', 'warn', 'error']),
+		level: z.enum(["info", "warn", "error"]),
 		message: z.string().min(1),
 	}),
 });
 
 // Schema de ação no-op
 export const noopActionSchema = z.object({
-	type: z.literal('noop'),
+	type: z.literal("noop"),
 	params: z.object({}),
 });
 
 // União discriminada de todas as ações
-export const actionSchema = z.discriminatedUnion('type', [
+export const actionSchema = z.discriminatedUnion("type", [
 	sendEmailActionSchema,
 	callWebhookActionSchema,
 	logActionSchema,
@@ -75,7 +124,7 @@ export const actionSchema = z.discriminatedUnion('type', [
 export const ruleCreateSchema = z.object({
 	name: z.string().min(1).max(255),
 	event_type: z.string().min(1).max(100),
-	condition: z.string().min(1), // JSONPath expression
+	condition: jsonLogicSchema, // JSONLogic expression
 	action: actionSchema,
 	active: z.boolean().optional().default(true),
 });
@@ -84,14 +133,14 @@ export const ruleCreateSchema = z.object({
 export const ruleUpdateSchema = z.object({
 	name: z.string().min(1).max(255).optional(),
 	event_type: z.string().min(1).max(100).optional(),
-	condition: z.string().min(1).optional(),
+	condition: jsonLogicSchema.optional(), // JSONLogic expression
 	action: actionSchema.optional(),
 	active: z.boolean().optional(),
 });
 
 // Schema de filtro de regras (GET /rules)
 export const ruleFiltersSchema = z.object({
-	active: z.enum(['true', 'false']).optional(),
+	active: z.enum(["true", "false"]).optional(),
 	event_type: z.string().optional(),
 	limit: z.string().regex(/^\d+$/).optional(),
 	offset: z.string().regex(/^\d+$/).optional(),
