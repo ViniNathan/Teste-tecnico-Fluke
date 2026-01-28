@@ -27,6 +27,7 @@ export interface Event {
 	state: EventState;
 	received_count: number;
 	created_at: Date;
+	processing_started_at: Date | null;
 	processed_at: Date | null;
 	replayed_at: Date | null;
 }
