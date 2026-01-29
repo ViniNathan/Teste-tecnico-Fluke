@@ -1,7 +1,9 @@
 import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 import 'dotenv/config';
 
-// Configura√ß√£o do Pool
+const isTestEnv = process.env.NODE_ENV === 'test';
+
+// ConfiguraÁ„o do Pool
 const pool = new Pool({
 	connectionString: process.env.DATABASE_URL,
 	max: 20,
@@ -9,10 +11,12 @@ const pool = new Pool({
 	connectionTimeoutMillis: 2000,
 });
 
-// Listener de erros no n√≠vel do pool
+// Listener de erros no nÌvel do pool
 pool.on('error', (err, client) => {
 	console.error('Erro inesperado no cliente PostgreSQL', err);
-	process.exit(-1); // Fail fast em caso de erro cr√≠tico de conex√£o
+	if (!isTestEnv) {
+		process.exit(-1); // Fail fast em caso de erro crÌtico de conex„o
+	}
 });
 
 // Wrapper para tipagem e logs centralizados (ajuda no debug)
@@ -25,18 +29,20 @@ export const db = {
 		return pool.query<T>(text, params);
 	},
 
-	// Exp√µe o pool diretamente caso precise de transa√ß√µes manuais (client.connect())
+	// Expıe o pool diretamente caso precise de transaÁıes manuais (client.connect())
 	pool,
 };
 
-// Teste r√°pido de conex√£o ao iniciar (para fail-fast)
-pool
-	.query('SELECT NOW()')
-	.then(() => {
-		console.log('‚úÖ Connected to PostgreSQL');
-	})
-	.catch((err) => {
-		console.error('‚ùå Failed to connect to PostgreSQL:', err);
-	});
+// Teste r·pido de conex„o ao iniciar (para fail-fast)
+if (!isTestEnv) {
+	pool
+		.query('SELECT NOW()')
+		.then(() => {
+			console.log('? Connected to PostgreSQL');
+		})
+		.catch((err) => {
+			console.error('? Failed to connect to PostgreSQL:', err);
+		});
+}
 
 export { pool };

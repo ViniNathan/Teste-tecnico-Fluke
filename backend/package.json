@@ -11,6 +11,7 @@
 		"db:down": "node-pg-migrate --migrations-dir src/db/migrations down",
 		"db:redo": "npm run db:down && npm run db:up",
 		"db:status": "node-pg-migrate --migrations-dir src/db/migrations status",
+		"test": "node -r tsx/cjs --test tests/backend.test.js",
 		"lint": "biome check .",
 		"lint:fix": "biome check . --write"
 	},
@@ -29,6 +30,7 @@
 		"pino": "^10.3.0",
 		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
+		"ws": "^8.19.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {

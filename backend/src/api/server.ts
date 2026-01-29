@@ -1,6 +1,7 @@
-// backend/src/api/server.ts
-import express, { type Express } from 'express';
+﻿import express, { type Express } from 'express';
 import cors from 'cors';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
 import { pool } from '../db/client';
 import logger from '../utils/logger';
 import { errorHandler } from './middleware/errorHandler';
@@ -58,6 +59,29 @@ function createApp(): Express {
 	return app;
 }
 
+const setupWebsocketBridge = async (wss: WebSocketServer) => {
+	const client = await pool.connect();
+
+	client.on('error', (err) => {
+		logger.error({ error: err }, 'Postgres LISTEN connection error');
+	});
+
+	await client.query('LISTEN event_updates');
+	logger.info('Listening to Postgres channel event_updates');
+
+	client.on('notification', (notification) => {
+		if (!notification.payload) {
+			return;
+		}
+		const message = notification.payload;
+		wss.clients.forEach((socket) => {
+			if (socket.readyState === socket.OPEN) {
+				socket.send(message);
+			}
+		});
+	});
+};
+
 // Inicia o servidor com shutdown gracefully
 async function startServer() {
 	const PORT = process.env.PORT || 3000;
@@ -73,8 +97,22 @@ async function startServer() {
 		process.exit(1);
 	}
 
+	const server = createServer(app);
+	const wss = new WebSocketServer({ server, path: '/ws' });
+
+	wss.on('connection', (socket) => {
+		logger.info('WebSocket client connected');
+		socket.on('close', () => {
+			logger.info('WebSocket client disconnected');
+		});
+	});
+
+	setupWebsocketBridge(wss).catch((err) => {
+		logger.error({ error: err }, 'Failed to setup websocket bridge');
+	});
+
 	// Inicia o servidor
-	const server = app.listen(PORT, () => {
+	server.listen(PORT, () => {
 		logger.info({ port: PORT }, 'Server started successfully');
 	});
 
