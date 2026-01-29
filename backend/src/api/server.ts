@@ -1,5 +1,6 @@
 // backend/src/api/server.ts
 import express, { type Express } from 'express';
+import cors from 'cors';
 import { pool } from '../db/client';
 import logger from '../utils/logger';
 import { errorHandler } from './middleware/errorHandler';
@@ -16,11 +17,24 @@ function createApp(): Express {
 	// 1. Request logging (primeiro para capturar tudo)
 	app.use(requestLoggingMiddleware);
 
-	// 2. Parsing do body
+	// 2. CORS
+	const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3001')
+		.split(',')
+		.map((origin) => origin.trim())
+		.filter(Boolean);
+
+	app.use(
+		cors({
+			origin: corsOrigins,
+			credentials: true,
+		}),
+	);
+
+	// 3. Parsing do body
 	app.use(express.json({ limit: '1mb' }));
 	app.use(express.urlencoded({ extended: true }));
 
-	// 3. Health check (antes das rotas principais)
+	// 4. Health check (antes das rotas principais)
 	app.get('/health', (req, res) => {
 		res.json({ status: 'ok', timestamp: new Date().toISOString() });
 	});
