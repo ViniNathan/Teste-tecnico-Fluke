@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ export default function RulesPage() {
 	const [action, setAction] = useState(emptyJson);
 	const [active, setActive] = useState(true);
 
-	const loadRules = async () => {
+	const loadRules = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 		try {
@@ -38,11 +38,11 @@ export default function RulesPage() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		void loadRules();
-	}, []);
+	}, [loadRules]);
 
 	const resetForm = () => {
 		setSelectedRule(null);
@@ -68,7 +68,7 @@ export default function RulesPage() {
 		} catch (err) {
 			return {
 				value: null,
-				error: err instanceof Error ? err.message : "JSON inválido",
+				error: err instanceof Error ? err.message : "JSON invÃ¡lido",
 			} as const;
 		}
 	};
@@ -127,7 +127,7 @@ export default function RulesPage() {
 						Regras
 					</p>
 					<h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-						Regras dinâmicas
+						Regras dinÃ¢micas
 					</h1>
 					<p className="mt-3 text-sm text-zinc-400 md:text-base">
 						Crie, edite e desative regras que controlam o processamento.
@@ -141,10 +141,11 @@ export default function RulesPage() {
 						</p>
 						<div className="mt-4 space-y-4 text-sm text-zinc-300">
 							<div>
-								<label className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label htmlFor="rule-name" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 									Nome
 								</label>
 								<input
+									id="rule-name"
 									value={name}
 									onChange={(event) => setName(event.target.value)}
 									className="mt-2 w-full border border-border-subtle bg-transparent px-3 py-2 text-sm"
@@ -152,10 +153,11 @@ export default function RulesPage() {
 								/>
 							</div>
 							<div>
-								<label className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label htmlFor="rule-event-type" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 									Tipo de evento
 								</label>
 								<input
+									id="rule-event-type"
 									value={eventType}
 									onChange={(event) => setEventType(event.target.value)}
 									className="mt-2 w-full border border-border-subtle bg-transparent px-3 py-2 text-sm"
@@ -163,30 +165,33 @@ export default function RulesPage() {
 								/>
 							</div>
 							<div>
-								<label className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label htmlFor="rule-condition" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 									Condition (JSONLogic)
 								</label>
 								<textarea
+									id="rule-condition"
 									value={condition}
 									onChange={(event) => setCondition(event.target.value)}
 									className="mt-2 h-32 w-full border border-border-subtle bg-transparent px-3 py-2 text-xs"
 								/>
 							</div>
 							<div>
-								<label className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label htmlFor="rule-action" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 									Action (JSON)
 								</label>
 								<textarea
+									id="rule-action"
 									value={action}
 									onChange={(event) => setAction(event.target.value)}
 									className="mt-2 h-32 w-full border border-border-subtle bg-transparent px-3 py-2 text-xs"
 								/>
 							</div>
 							<div className="flex items-center gap-3">
-								<label className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label htmlFor="rule-active" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 									Ativa
 								</label>
 								<input
+									id="rule-active"
 									type="checkbox"
 									checked={active}
 									onChange={(event) => setActive(event.target.checked)}
@@ -198,7 +203,7 @@ export default function RulesPage() {
 									onClick={onSubmit}
 									className="border border-border-subtle bg-transparent text-foreground hover:bg-white/5"
 								>
-									{selectedRule ? "Salvar alterações" : "Criar regra"}
+									{selectedRule ? "Salvar altera??es" : "Criar regra"}
 								</Button>
 								<Button
 									variant="outline"
@@ -232,7 +237,7 @@ export default function RulesPage() {
 											Status
 										</TableHead>
 										<TableHead className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-											Ações
+											AÃ§Ãµes
 										</TableHead>
 									</TableRow>
 								</TableHeader>
