@@ -1,5 +1,6 @@
 import jsonLogic from 'json-logic-js';
 
+import { validateJsonLogicCondition } from '../domain/jsonLogic';
 import type { JsonLogicExpression, JsonValue } from '../domain/types';
 
 const parseJsonField = (value: unknown): JsonValue | null => {
@@ -32,6 +33,10 @@ export const evaluateJsonLogic = (
 	const parsed = parseJsonField(condition);
 	if (!isJsonLogicExpression(parsed)) {
 		throw new Error('Invalid JSONLogic condition');
+	}
+	const validation = validateJsonLogicCondition(parsed);
+	if (!validation.ok) {
+		throw new Error(`Invalid JSONLogic condition: ${validation.error}`);
 	}
 	const result = jsonLogic.apply(parsed, data);
 	return Boolean(result);
