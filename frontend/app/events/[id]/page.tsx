@@ -2,6 +2,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getEvent, getEventAttempts } from "@/lib/api";
+import { LiveEventUpdates } from "@/components/live-event-updates";
 import { ReplayButton } from "./ReplayButton";
 
 const stateStyles: Record<string, { label: string; className: string }> = {
@@ -26,6 +27,7 @@ export default async function EventDetailPage({
 
 	return (
 		<div className="min-h-screen bg-background text-foreground">
+			<LiveEventUpdates eventId={eventId} />
 			<div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12 md:px-10">
 				<header className="flex flex-col gap-6 border-b border-border-subtle pb-6">
 					<Link
