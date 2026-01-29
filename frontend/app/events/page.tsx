@@ -1,3 +1,4 @@
+﻿import Link from "next/link";
 import { ArrowRight, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,37 +10,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-
-const events = [
-	{
-		id: "evt-001",
-		type: "payment.created",
-		state: "processed",
-		receivedCount: 1,
-		createdAt: "2026-01-29 02:36",
-	},
-	{
-		id: "evt-002",
-		type: "payment.created",
-		state: "failed",
-		receivedCount: 1,
-		createdAt: "2026-01-29 02:38",
-	},
-	{
-		id: "evt-003",
-		type: "order.paid",
-		state: "processing",
-		receivedCount: 2,
-		createdAt: "2026-01-29 02:40",
-	},
-	{
-		id: "evt-004",
-		type: "order.shipped",
-		state: "pending",
-		receivedCount: 1,
-		createdAt: "2026-01-29 02:44",
-	},
-];
+import { listEvents } from "@/lib/api";
+import type { EventState } from "@/lib/api/schemas";
 
 const stateStyles: Record<string, { label: string; className: string }> = {
 	pending: { label: "Pendente", className: "text-warning" },
@@ -48,7 +20,21 @@ const stateStyles: Record<string, { label: string; className: string }> = {
 	failed: { label: "Falhou", className: "text-danger" },
 };
 
-export default function EventsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function EventsPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ state?: EventState; type?: string }>;
+}) {
+	const resolvedParams = await searchParams;
+	const events = await listEvents({
+		state: resolvedParams.state,
+		type: resolvedParams.type,
+		limit: 50,
+		offset: 0,
+	});
+
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 md:px-10">
@@ -64,6 +50,9 @@ export default function EventsPage() {
 							<p className="mt-3 text-sm text-zinc-400 md:text-base">
 								Estados, reprocessos e sinais de não-determinismo.
 							</p>
+							<p className="mt-2 text-xs text-zinc-500">
+								Replay usa regras atuais e pode produzir resultados diferentes.
+							</p>
 						</div>
 						<div className="flex flex-col gap-2 md:flex-row">
 							<Button
@@ -73,24 +62,35 @@ export default function EventsPage() {
 								<Filter className="h-4 w-4" />
 								Filtros
 							</Button>
-							<Button className="gap-2 border border-border-subtle bg-transparent text-foreground hover:bg-white/5">
-								Ver detalhes
-								<ArrowRight className="h-4 w-4" />
+							<Button
+								asChild
+								className="gap-2 border border-border-subtle bg-transparent text-foreground hover:bg-white/5"
+							>
+								<Link href={events.data[0] ? `/events/${events.data[0].id}` : "/events"}>
+									Ver detalhes
+									<ArrowRight className="h-4 w-4" />
+								</Link>
 							</Button>
 						</div>
 					</div>
 					<div className="grid gap-4 text-3xl font-semibold md:grid-cols-3 md:text-4xl">
 						<div className="flex items-end justify-between border border-border-subtle p-4">
 							<span className="text-zinc-400">Pendentes</span>
-							<span className="text-warning">12</span>
+							<span className="text-warning">
+								{events.data.filter((event) => event.state === "pending").length}
+							</span>
 						</div>
 						<div className="flex items-end justify-between border border-border-subtle p-4">
 							<span className="text-zinc-400">Processando</span>
-							<span className="text-info">4</span>
+							<span className="text-info">
+								{events.data.filter((event) => event.state === "processing").length}
+							</span>
 						</div>
 						<div className="flex items-end justify-between border border-border-subtle p-4">
 							<span className="text-zinc-400">Falhas 24h</span>
-							<span className="text-danger">3</span>
+							<span className="text-danger">
+								{events.data.filter((event) => event.state === "failed").length}
+							</span>
 						</div>
 					</div>
 				</header>
@@ -109,15 +109,21 @@ export default function EventsPage() {
 									Estado
 								</TableHead>
 								<TableHead className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-									Reprocessos
+									Recebido
 								</TableHead>
 								<TableHead className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 									Criado em
 								</TableHead>
+								<TableHead className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+									Processado
+								</TableHead>
+								<TableHead className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+									Replay
+								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{events.map((event) => {
+							{events.data.map((event) => {
 								const state = stateStyles[event.state];
 								return (
 									<TableRow
@@ -125,23 +131,34 @@ export default function EventsPage() {
 										className="border-border-subtle text-sm"
 									>
 										<TableCell className="font-medium text-zinc-100">
-											{event.id}
+											<Link
+												href={`/events/${event.id}`}
+												className="hover:underline"
+											>
+												{event.external_id}
+											</Link>
 										</TableCell>
 										<TableCell className="text-zinc-300">
 											{event.type}
 										</TableCell>
 										<TableCell>
-											<Badge
-												className={`${state.className} border border-border-subtle`}
-											>
+											<Badge className={`${state.className} border border-border-subtle`}>
 												{state.label}
 											</Badge>
 										</TableCell>
 										<TableCell className="text-zinc-300">
-											{event.receivedCount}
+											{event.received_count}
 										</TableCell>
 										<TableCell className="text-zinc-300">
-											{event.createdAt}
+											{new Date(event.created_at).toLocaleString()}
+										</TableCell>
+										<TableCell className="text-zinc-300">
+											{event.processed_at
+												? new Date(event.processed_at).toLocaleString()
+												: "—"}
+										</TableCell>
+										<TableCell className="text-zinc-300">
+											{event.replayed_at ? "Sim" : "Não"}
 										</TableCell>
 									</TableRow>
 								);
