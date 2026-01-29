@@ -68,7 +68,10 @@ const finalizeAttemptAndEvent = async (
 		await client.query(
 			`
       UPDATE event_attempts
-      SET status = $1, error = $2, finished_at = NOW()
+      SET status = $1,
+          error = $2,
+          finished_at = NOW(),
+          duration_ms = FLOOR(EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)
       WHERE id = $3
       `,
 			[status, error, attemptId],
@@ -101,6 +104,11 @@ const normalizeAction = (action: unknown): Action => {
 export const processClaimedEvent = async (claim: ClaimedEvent) => {
 	const client = await pool.connect();
 	const errors: string[] = [];
+	const attemptLogger = processorLogger.child({
+		eventId: claim.event.id,
+		attemptId: claim.attemptId,
+	});
+	const startedAt = Date.now();
 
 	try {
 		const rules = await loadRulesForEvent(client, claim.event.type);
@@ -128,7 +136,10 @@ export const processClaimedEvent = async (claim: ClaimedEvent) => {
 				}
 
 				const action = normalizeAction(rule.action);
-				await executeAction(action, claim.event);
+				await executeAction(action, claim.event, {
+					eventId: claim.event.id,
+					attemptId: claim.attemptId,
+				});
 				result = 'applied';
 			} catch (err) {
 				error = toErrorString(err);
@@ -152,23 +163,27 @@ export const processClaimedEvent = async (claim: ClaimedEvent) => {
 			attemptError,
 		);
 
-		processorLogger.info(
+		const durationMs = Date.now() - startedAt;
+		attemptLogger.info(
 			{
 				eventId: claim.event.id,
 				attemptId: claim.attemptId,
 				status: attemptStatus,
 				errors: errors.length,
+				duration_ms: durationMs,
 			},
 			'Event processed',
 		);
 	} catch (err) {
 		const errorMessage = toErrorString(err);
+		const durationMs = Date.now() - startedAt;
 
-		processorLogger.error(
+		attemptLogger.error(
 			{
 				eventId: claim.event.id,
 				attemptId: claim.attemptId,
 				error: errorMessage,
+				duration_ms: durationMs,
 			},
 			'Processing failed',
 		);
@@ -183,7 +198,7 @@ export const processClaimedEvent = async (claim: ClaimedEvent) => {
 				errorMessage,
 			);
 		} catch (updateErr) {
-			processorLogger.error(
+			attemptLogger.error(
 				{ error: toErrorString(updateErr) },
 				'Failed to persist processing error',
 			);
