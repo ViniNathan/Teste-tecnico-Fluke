@@ -33,7 +33,7 @@ export const ruleExecutionSchema = z.object({
 	rule_id: z.number(),
 	rule_name: z.string().optional(),
 	rule_version_id: z.number(),
-	result: z.enum(["applied", "skipped", "failed"]),
+	result: z.enum(["applied", "skipped", "failed", "deduped"]),
 	error: z.string().nullable(),
 	executed_at: z.string(),
 });

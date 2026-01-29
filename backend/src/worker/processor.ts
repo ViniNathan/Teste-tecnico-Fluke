@@ -1,5 +1,6 @@
 ﻿import type { PoolClient } from 'pg';
 import { pool } from '../db/client';
+import { isIdempotentAction } from '../domain/actionUtils';
 import type { Action, RuleExecutionResult } from '../domain/types';
 import type { ClaimedEvent, RuleRow } from '../types/worker';
 import { createLogger } from '../utils/logger';
@@ -29,6 +30,27 @@ const recordRuleExecution = async (
       `,
 		[attemptId, rule.rule_id, rule.rule_version_id, result, error],
 	);
+};
+
+const wasRuleAppliedForEvent = async (
+	client: PoolClient,
+	eventId: number,
+	ruleVersionId: number,
+): Promise<boolean> => {
+	const result = await client.query(
+		`
+      SELECT 1
+      FROM rule_executions re
+      JOIN event_attempts ea ON ea.id = re.attempt_id
+      WHERE ea.event_id = $1
+        AND re.rule_version_id = $2
+        AND re.result IN ('applied', 'deduped')
+      LIMIT 1
+    `,
+		[eventId, ruleVersionId],
+	);
+
+	return result.rows.length > 0;
 };
 
 const loadRulesForEvent = async (
@@ -91,19 +113,16 @@ const finalizeAttemptAndEvent = async (
 		);
 
 		const attemptRow = attemptResult.rows[0];
-		await client.query(
-			`SELECT pg_notify('event_updates', $1)`,
-			[
-				JSON.stringify({
-					eventId,
-					state,
-					attemptId,
-					status,
-					finishedAt: attemptRow?.finished_at ?? null,
-					durationMs: attemptRow?.duration_ms ?? null,
-				}),
-			],
-		);
+		await client.query(`SELECT pg_notify('event_updates', $1)`, [
+			JSON.stringify({
+				eventId,
+				state,
+				attemptId,
+				status,
+				finishedAt: attemptRow?.finished_at ?? null,
+				durationMs: attemptRow?.duration_ms ?? null,
+			}),
+		]);
 
 		await client.query('COMMIT');
 	} catch (err) {
@@ -155,6 +174,26 @@ export const processClaimedEvent = async (claim: ClaimedEvent) => {
 				}
 
 				const action = normalizeAction(rule.action);
+				if (!isIdempotentAction(action)) {
+					const alreadyApplied = await wasRuleAppliedForEvent(
+						client,
+						claim.event.id,
+						rule.rule_version_id,
+					);
+
+					if (alreadyApplied) {
+						result = 'deduped';
+						await recordRuleExecution(
+							client,
+							claim.attemptId,
+							rule,
+							result,
+							null,
+						);
+						continue;
+					}
+				}
+
 				await executeAction(action, claim.event, {
 					eventId: claim.event.id,
 					attemptId: claim.attemptId,

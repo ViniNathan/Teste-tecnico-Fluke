@@ -1,5 +1,5 @@
-﻿import express, { type Express } from 'express';
-import cors from 'cors';
+﻿import cors from 'cors';
+import express, { type Express } from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { pool } from '../db/client';

@@ -178,7 +178,7 @@ export type Action =
 // - applied: condição bateu, ação executada
 // - skipped: condição não bateu
 // - failed: erro na execução
-export type RuleExecutionResult = 'applied' | 'skipped' | 'failed';
+export type RuleExecutionResult = 'applied' | 'skipped' | 'failed' | 'deduped';
 
 // Registro de execução de regra
 // Rastreia regras avaliadas em cada tentativa.

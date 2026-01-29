@@ -21,7 +21,7 @@ const replayLogger = createLogger({ module: 'replay' });
 // IMPORTANTE:
 // - Apenas eventos em estado 'processed' ou 'failed' podem ser reprocessados
 // - A "reprocessação" criará um novo tentativa
-// - As ações serão executadas novamente (NÃO idempotentes!)
+// - Acoes nao idempotentes sao deduplicadas (at-most-once)
 // - As versões atuais das regras serão usadas (podem diferir das originais)
 // - Casos de uso:
 //   - Retentar eventos falhados após correção de bug
@@ -86,7 +86,7 @@ router.post(
 					message: 'Event queued for replay',
 					event: updatedEvent,
 					warning:
-						'Actions will be executed again. This may cause side effects (e.g., duplicate emails).',
+						'Replay uses current rules. Non-idempotent actions are deduplicated (at-most-once) but may be skipped if previously applied.',
 				});
 			} catch (dbErr) {
 				await client.query('ROLLBACK');
@@ -137,7 +137,8 @@ router.post(
 					requested: event_ids.length,
 					replayed: result.rows.length,
 					events: result.rows,
-					warning: 'Actions will be executed again for all events.',
+					warning:
+						'Replay uses current rules. Non-idempotent actions are deduplicated (at-most-once).',
 				});
 			} catch (dbErr) {
 				await client.query('ROLLBACK');
