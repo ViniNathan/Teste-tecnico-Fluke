@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { validateJsonLogicCondition } from './jsonLogic';
+import type { JsonValue } from './types';
 
 const MAX_JSON_DEPTH = 20;
 
@@ -42,6 +43,17 @@ const isJsonValue = (value: unknown, depth = 0): boolean => {
 	return false;
 };
 
+const jsonValueSchema = z.custom<JsonValue>((value) => isJsonValue(value), {
+	message: 'Value must be valid JSON',
+});
+
+const jsonObjectSchema = z.custom<Record<string, JsonValue>>(
+	(value) => isPlainObject(value) && isJsonValue(value),
+	{
+		message: 'Value must be a JSON object',
+	},
+);
+
 const jsonLogicSchema = z
 	.custom(
 		(value) =>
@@ -64,7 +76,7 @@ const jsonLogicSchema = z
 export const eventCreateSchema = z.object({
 	id: z.string().min(1).max(255),
 	type: z.string().min(1).max(100),
-	data: z.record(z.string(), z.any()),
+	data: jsonObjectSchema,
 });
 
 // Schema de filtro de estado de evento (GET /events?state=...)
@@ -93,7 +105,7 @@ export const sendEmailActionSchema = z.object({
 		to: z.email(),
 		subject: z.string().min(1),
 		template: z.string().min(1),
-		data: z.record(z.string(), z.any()).optional(),
+		data: jsonObjectSchema.optional(),
 	}),
 });
 
@@ -104,7 +116,7 @@ export const callWebhookActionSchema = z.object({
 		url: z.url(),
 		method: z.enum(['POST', 'PUT', 'PATCH']),
 		headers: z.record(z.string(), z.string()).optional(),
-		body: z.record(z.string(), z.any()).optional(),
+		body: jsonValueSchema.optional(),
 	}),
 });
 
