@@ -7,7 +7,7 @@ const WEBHOOK_TIMEOUT_MS = Number(process.env.WEBHOOK_TIMEOUT_MS ?? '5000');
 
 const EMAIL_MODE = (process.env.EMAIL_MODE ?? 'disabled').toLowerCase();
 
-const callWebhook = async (action: Action) => {
+const callWebhook = async (action: Action, logger: typeof actionsLogger) => {
 	if (action.type !== 'call_webhook') {
 		return;
 	}
@@ -42,13 +42,13 @@ const callWebhook = async (action: Action) => {
 	}
 };
 
-const sendEmail = async (action: Action) => {
+const sendEmail = async (action: Action, logger: typeof actionsLogger) => {
 	if (action.type !== 'send_email') {
 		return;
 	}
 
 	if (EMAIL_MODE === 'log') {
-		actionsLogger.warn(
+		logger.warn(
 			{ to: action.params.to, subject: action.params.subject },
 			'send_email simulated (EMAIL_MODE=log)',
 		);
@@ -60,36 +60,44 @@ const sendEmail = async (action: Action) => {
 	);
 };
 
-const logAction = async (action: Action) => {
+const logAction = async (action: Action, logger: typeof actionsLogger) => {
 	if (action.type !== 'log') {
 		return;
 	}
 	const { level, message } = action.params;
 	const logMessage = message ?? 'log action';
 	if (level === 'info') {
-		actionsLogger.info({ message: logMessage }, 'Rule action log');
+		logger.info({ message: logMessage }, 'Rule action log');
 		return;
 	}
 	if (level === 'warn') {
-		actionsLogger.warn({ message: logMessage }, 'Rule action log');
+		logger.warn({ message: logMessage }, 'Rule action log');
 		return;
 	}
-	actionsLogger.error({ message: logMessage }, 'Rule action log');
+	logger.error({ message: logMessage }, 'Rule action log');
 };
 
-export const executeAction = async (action: Action, _event: Event) => {
-	void _event;
+export const executeAction = async (
+	action: Action,
+	event: Event,
+	context?: { eventId?: number; attemptId?: number },
+) => {
+	const eventId = context?.eventId ?? event.id;
+	const logger = actionsLogger.child({
+		eventId,
+		attemptId: context?.attemptId,
+	});
 	switch (action.type) {
 		case 'log':
-			await logAction(action);
+			await logAction(action, logger);
 			return;
 		case 'noop':
 			return;
 		case 'call_webhook':
-			await callWebhook(action);
+			await callWebhook(action, logger);
 			return;
 		case 'send_email':
-			await sendEmail(action);
+			await sendEmail(action, logger);
 			return;
 		default:
 			throw new Error(`Unsupported action type: ${(action as Action).type}`);
