@@ -203,7 +203,7 @@ export default function RulesPage() {
 									onClick={onSubmit}
 									className="border border-border-subtle bg-transparent text-foreground hover:bg-white/5"
 								>
-									{selectedRule ? "Salvar altera??es" : "Criar regra"}
+									{selectedRule ? "Salvar alterações" : "Criar regra"}
 								</Button>
 								<Button
 									variant="outline"
