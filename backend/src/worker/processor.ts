@@ -1,4 +1,4 @@
-import type { PoolClient } from 'pg';
+﻿import type { PoolClient } from 'pg';
 import { pool } from '../db/client';
 import type { Action, RuleExecutionResult } from '../domain/types';
 import type { ClaimedEvent, RuleRow } from '../types/worker';
@@ -65,7 +65,10 @@ const finalizeAttemptAndEvent = async (
 ) => {
 	await client.query('BEGIN');
 	try {
-		await client.query(
+		const attemptResult = await client.query<{
+			duration_ms: number | null;
+			finished_at: string | null;
+		}>(
 			`
       UPDATE event_attempts
       SET status = $1,
@@ -73,6 +76,7 @@ const finalizeAttemptAndEvent = async (
           finished_at = NOW(),
           duration_ms = FLOOR(EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)
       WHERE id = $3
+      RETURNING duration_ms, finished_at
       `,
 			[status, error, attemptId],
 		);
@@ -84,6 +88,21 @@ const finalizeAttemptAndEvent = async (
       WHERE id = $2
       `,
 			[state, eventId],
+		);
+
+		const attemptRow = attemptResult.rows[0];
+		await client.query(
+			`SELECT pg_notify('event_updates', $1)`,
+			[
+				JSON.stringify({
+					eventId,
+					state,
+					attemptId,
+					status,
+					finishedAt: attemptRow?.finished_at ?? null,
+					durationMs: attemptRow?.duration_ms ?? null,
+				}),
+			],
 		);
 
 		await client.query('COMMIT');

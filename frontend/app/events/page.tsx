@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { listEvents } from "@/lib/api";
 import type { EventState } from "@/lib/api/schemas";
+import { LiveEventUpdates } from "@/components/live-event-updates";
 
 const stateStyles: Record<string, { label: string; className: string }> = {
 	pending: { label: "Pendente", className: "text-warning" },
@@ -37,6 +38,7 @@ export default async function EventsPage({
 
 	return (
 		<div className="min-h-screen bg-background text-foreground">
+			<LiveEventUpdates eventIds={events.data.map((event) => event.id)} />
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 md:px-10">
 				<header className="flex flex-col gap-6 border-b border-border-subtle pb-6">
 					<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">

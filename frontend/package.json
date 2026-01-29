@@ -6,6 +6,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
+		"test": "node -r ../backend/node_modules/tsx/dist/cjs/index.cjs --test tests/api.test.js",
 		"lint": "biome check .",
 		"lint:fix": "biome check . --write"
 	},
