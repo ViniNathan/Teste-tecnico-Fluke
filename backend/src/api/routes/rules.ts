@@ -1,67 +1,32 @@
 // backend/src/api/routes/rules.ts
-import { Router, Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import { pool } from '../../db/client';
 import {
-	NotFoundError,
-	ValidationError,
-	ConflictError,
-} from '../../utils/errors';
+	type NextFunction,
+	type Request,
+	type Response,
+	Router,
+} from 'express';
+import { pool } from '../../db/client';
+import { ruleCreateSchema, ruleUpdateSchema } from '../../domain/validators';
+import type { ListResponse } from '../../types/api';
+import { NotFoundError, ValidationError } from '../../utils/errors';
 import { createLogger } from '../../utils/logger';
-import { ListResponse } from '../../types/api';
 
 const router = Router();
 const rulesLogger = createLogger({ module: 'rules' });
 
-const sendEmailActionSchema = z.object({
-	type: z.literal('send_email'),
-	params: z.object({
-		to: z.email(),
-		subject: z.string().min(1),
-		template: z.string().min(1),
-		data: z.record(z.string(), z.any()).optional(),
-	}),
-});
+const parseJsonField = (value: unknown) => {
+	if (typeof value !== 'string') {
+		return value;
+	}
+	try {
+		return JSON.parse(value);
+	} catch {
+		return value;
+	}
+};
 
-const callWebhookActionSchema = z.object({
-	type: z.literal('call_webhook'),
-	params: z.object({
-		url: z.url(),
-		method: z.enum(['POST', 'PUT', 'PATCH']),
-		headers: z.record(z.string(), z.string()).optional(),
-		body: z.record(z.string(), z.any()).optional(),
-	}),
-});
-
-const logActionSchema = z.object({
-	type: z.literal('log'),
-	params: z.object({
-		level: z.enum(['info', 'warn', 'error']),
-		message: z.string().min(1),
-	}),
-});
-
-const noopActionSchema = z.object({
-	type: z.literal('noop'),
-	params: z.object({}),
-});
-
-const actionSchema = z.discriminatedUnion('type', [
-	sendEmailActionSchema,
-	callWebhookActionSchema,
-	logActionSchema,
-	noopActionSchema,
-]);
-
-const ruleCreateSchema = z.object({
-	name: z.string().min(1).max(255),
-	event_type: z.string().min(1).max(100),
-	condition: z.string().min(1), // JSONPath expression
-	action: actionSchema,
-	active: z.boolean().optional().default(true),
-});
-
-const ruleUpdateSchema = ruleCreateSchema.partial();
+const toJsonParam = (value: unknown) =>
+	typeof value === 'string' ? value : JSON.stringify(value);
 
 // POST /rules - cria uma nova regra
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -93,7 +58,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         VALUES ($1, $2, $3, 1)
         RETURNING id, rule_id, condition, action, version, created_at
         `,
-				[rule.id, payload.condition, JSON.stringify(payload.action)],
+				[rule.id, toJsonParam(payload.condition), toJsonParam(payload.action)],
 			);
 
 			const version = versionResult.rows[0];
@@ -119,15 +84,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 				...rule,
 				current_version: {
 					...version,
-					action: (() => {
-						try {
-							return typeof version.action === 'string'
-								? JSON.parse(version.action)
-								: version.action;
-						} catch (e) {
-							return version.action;
-						}
-					})(),
+					condition: parseJsonField(version.condition),
+					action: parseJsonField(version.action),
 				},
 			});
 		} catch (dbErr) {
@@ -187,16 +145,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 			current_version: row.version_id
 				? {
 						id: row.version_id,
-						condition: row.condition,
-						action: (() => {
-							try {
-								return typeof row.action === 'string'
-									? JSON.parse(row.action)
-									: row.action;
-							} catch (e) {
-								return row.action;
-							}
-						})(),
+						condition: parseJsonField(row.condition),
+						action: parseJsonField(row.action),
 						version: row.version,
 						created_at: row.version_created_at,
 					}
@@ -257,16 +207,8 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 			current_version: row.version_id
 				? {
 						id: row.version_id,
-						condition: row.condition,
-						action: (() => {
-							try {
-								return typeof row.action === 'string'
-									? JSON.parse(row.action)
-									: row.action;
-							} catch (e) {
-								return row.action;
-							}
-						})(),
+						condition: parseJsonField(row.condition),
+						action: parseJsonField(row.action),
 						version: row.version,
 						created_at: row.version_created_at,
 					}
@@ -359,8 +301,8 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
           `,
 					[
 						ruleId,
-						payload.condition ?? current.condition,
-						JSON.stringify(payload.action ?? current.action),
+						toJsonParam(payload.condition ?? current.condition),
+						toJsonParam(payload.action ?? current.action),
 						current.version + 1,
 					],
 				);
@@ -413,11 +355,8 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 				updated_at: row.updated_at,
 				current_version: {
 					id: row.version_id,
-					condition: row.condition,
-					action:
-						typeof row.action === 'string'
-							? JSON.parse(row.action)
-							: row.action,
+					condition: parseJsonField(row.condition),
+					action: parseJsonField(row.action),
 					version: row.version,
 					created_at: row.version_created_at,
 				},
@@ -492,7 +431,8 @@ router.get(
 
 			const versions = result.rows.map((row) => ({
 				...row,
-				action: row.action,
+				condition: parseJsonField(row.condition),
+				action: parseJsonField(row.action),
 			}));
 
 			res.json({

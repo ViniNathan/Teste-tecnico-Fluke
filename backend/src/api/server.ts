@@ -1,12 +1,12 @@
 // backend/src/api/server.ts
-import express, { Express } from 'express';
+import express, { type Express } from 'express';
+import { pool } from '../db/client';
 import logger from '../utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLoggingMiddleware } from './middleware/requestLogger';
 import { eventsRouter } from './routes/events';
-import { rulesRouter } from './routes/rules';
 import { replayRouter } from './routes/replay';
-import { pool } from '../db/client';
+import { rulesRouter } from './routes/rules';
 
 // Cria e configura o app Express
 function createApp(): Express {

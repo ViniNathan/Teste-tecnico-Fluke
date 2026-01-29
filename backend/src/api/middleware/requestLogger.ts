@@ -1,5 +1,5 @@
 // backend/src/api/middleware/requestLogger.ts
-import { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { createLogger } from '../../utils/logger';
 
 const httpLogger = createLogger({ module: 'http' });

@@ -1,9 +1,9 @@
 // backend/src/api/middleware/errorHandler.ts
-import { Request, Response, NextFunction } from 'express';
-import { ZodError, core } from 'zod';
-import logger from '../../utils/logger';
+import type { NextFunction, Request, Response } from 'express';
+import { type core, ZodError } from 'zod';
+import type { ErrorResponse, ValidationErrorDetail } from '../../types/api';
 import { AppError } from '../../utils/errors';
-import { ErrorResponse, ValidationErrorDetail } from '../../types/api';
+import logger from '../../utils/logger';
 
 function formatZodIssue(issue: core.$ZodIssue): ValidationErrorDetail {
 	return {
