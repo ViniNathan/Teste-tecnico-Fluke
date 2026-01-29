@@ -8,7 +8,7 @@ const workerLogger = createLogger({ module: 'worker' });
 
 const POLL_INTERVAL_MS = Number(process.env.WORKER_POLL_INTERVAL_MS ?? '1000');
 
-const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
+export const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 	const client = await pool.connect();
 
 	try {
