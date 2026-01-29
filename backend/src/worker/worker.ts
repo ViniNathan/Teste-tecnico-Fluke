@@ -105,7 +105,11 @@ export const startWorker = async () => {
 			await processClaimedEvent(claim);
 		} catch (err) {
 			workerLogger.error(
-				{ eventId: claim.event.id, error: err },
+				{
+					eventId: claim.event.id,
+					attemptId: claim.attemptId,
+					error: err,
+				},
 				'Unhandled worker error',
 			);
 		}
