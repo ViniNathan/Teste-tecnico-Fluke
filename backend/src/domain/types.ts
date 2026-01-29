@@ -58,6 +58,7 @@ export interface EventAttempt {
 	error: string | null; // erro + stack trace se falhar
 	started_at: Date;
 	finished_at: Date | null;
+	duration_ms: number | null;
 }
 
 // Tentativa com regras aplicadas (frontend)
