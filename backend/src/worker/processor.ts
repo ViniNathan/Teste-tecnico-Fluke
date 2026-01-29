@@ -55,35 +55,39 @@ const loadRulesForEvent = async (
 	return result.rows;
 };
 
-const finishAttempt = async (
+const finalizeAttemptAndEvent = async (
 	client: PoolClient,
 	attemptId: number,
+	eventId: number,
 	status: 'success' | 'failed',
+	state: 'processed' | 'failed',
 	error: string | null,
 ) => {
-	await client.query(
-		`
+	await client.query('BEGIN');
+	try {
+		await client.query(
+			`
       UPDATE event_attempts
       SET status = $1, error = $2, finished_at = NOW()
       WHERE id = $3
       `,
-		[status, error, attemptId],
-	);
-};
+			[status, error, attemptId],
+		);
 
-const updateEventState = async (
-	client: PoolClient,
-	eventId: number,
-	state: 'processed' | 'failed',
-) => {
-	await client.query(
-		`
+		await client.query(
+			`
       UPDATE events
       SET state = $1, processed_at = NOW(), processing_started_at = NULL
       WHERE id = $2
       `,
-		[state, eventId],
-	);
+			[state, eventId],
+		);
+
+		await client.query('COMMIT');
+	} catch (err) {
+		await client.query('ROLLBACK');
+		throw err;
+	}
 };
 
 const normalizeAction = (action: unknown): Action => {
@@ -139,8 +143,14 @@ export const processClaimedEvent = async (claim: ClaimedEvent) => {
 		const eventState = errors.length > 0 ? 'failed' : 'processed';
 		const attemptError = errors.length > 0 ? errors.join('\n') : null;
 
-		await finishAttempt(client, claim.attemptId, attemptStatus, attemptError);
-		await updateEventState(client, claim.event.id, eventState);
+		await finalizeAttemptAndEvent(
+			client,
+			claim.attemptId,
+			claim.event.id,
+			attemptStatus,
+			eventState,
+			attemptError,
+		);
 
 		processorLogger.info(
 			{
@@ -164,8 +174,14 @@ export const processClaimedEvent = async (claim: ClaimedEvent) => {
 		);
 
 		try {
-			await finishAttempt(client, claim.attemptId, 'failed', errorMessage);
-			await updateEventState(client, claim.event.id, 'failed');
+			await finalizeAttemptAndEvent(
+				client,
+				claim.attemptId,
+				claim.event.id,
+				'failed',
+				'failed',
+				errorMessage,
+			);
 		} catch (updateErr) {
 			processorLogger.error(
 				{ error: toErrorString(updateErr) },
