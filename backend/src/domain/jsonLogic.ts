@@ -1,36 +1,36 @@
-import type { JsonLogicExpression, JsonValue } from "./types";
+import type { JsonLogicExpression, JsonValue } from './types';
 
 const ALLOWED_OPERATORS = new Set([
-	"==",
-	"===",
-	"!=",
-	"!==",
-	">",
-	">=",
-	"<",
-	"<=",
-	"and",
-	"or",
-	"!",
-	"var",
-	"missing",
-	"missing_some",
-	"in",
-	"if",
-	"+",
-	"-",
-	"*",
-	"/",
-	"%",
-	"min",
-	"max",
-	"cat",
-	"substr",
-	"length",
+	'==',
+	'===',
+	'!=',
+	'!==',
+	'>',
+	'>=',
+	'<',
+	'<=',
+	'and',
+	'or',
+	'!',
+	'var',
+	'missing',
+	'missing_some',
+	'in',
+	'if',
+	'+',
+	'-',
+	'*',
+	'/',
+	'%',
+	'min',
+	'max',
+	'cat',
+	'substr',
+	'length',
 ]);
 
 const isPlainObject = (value: unknown): value is Record<string, JsonValue> =>
-	Object.prototype.toString.call(value) === "[object Object]";
+	Object.prototype.toString.call(value) === '[object Object]';
 
 const isOperatorObject = (
 	value: JsonValue,
@@ -49,7 +49,7 @@ const validateNode = (value: JsonValue, isRoot: boolean): string | null => {
 
 	if (Array.isArray(value)) {
 		if (isRoot) {
-			return "Condition root must be a JSONLogic operator object";
+			return 'Condition root must be a JSONLogic operator object';
 		}
 		for (const item of value) {
 			const error = validateNode(item, false);
@@ -60,10 +60,10 @@ const validateNode = (value: JsonValue, isRoot: boolean): string | null => {
 		return null;
 	}
 
-	if (typeof value === "object") {
+	if (typeof value === 'object') {
 		if (!isOperatorObject(value)) {
 			if (isRoot) {
-				return "Condition root must be a JSONLogic operator object";
+				return 'Condition root must be a JSONLogic operator object';
 			}
 			for (const entry of Object.entries(value)) {
 				const error = validateNode(entry[1], false);
