@@ -3,7 +3,7 @@ import 'dotenv/config';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
 
-// Configuração do Pool
+// ConfiguraÃ§Ã£o do Pool
 const pool = new Pool({
 	connectionString: process.env.DATABASE_URL,
 	max: 20,
@@ -11,11 +11,11 @@ const pool = new Pool({
 	connectionTimeoutMillis: 2000,
 });
 
-// Listener de erros no nível do pool
+// Listener de erros no nÃ­vel do pool
 pool.on('error', (err, client) => {
 	console.error('Erro inesperado no cliente PostgreSQL', err);
 	if (!isTestEnv) {
-		process.exit(-1); // Fail fast em caso de erro crítico de conexão
+		process.exit(-1); // Fail fast
 	}
 });
 
@@ -29,11 +29,10 @@ export const db = {
 		return pool.query<T>(text, params);
 	},
 
-	// Expõe o pool diretamente caso precise de transações manuais (client.connect())
 	pool,
 };
 
-// Teste rápido de conexão ao iniciar (para fail-fast)
+// Teste rï¿½pido de conexï¿½o ao iniciar (para fail-fast)
 if (!isTestEnv) {
 	pool
 		.query('SELECT NOW()')
