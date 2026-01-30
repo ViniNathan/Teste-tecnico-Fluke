@@ -166,9 +166,7 @@ export default async function EventDetailPage({
 											>
 												<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
 													{rule.rule_name ?? `Regra ${rule.rule_id}`}{" "}
-													{rule.rule_version
-														? `(v${rule.rule_version})`
-														: ""}
+													{rule.rule_version ? `(v${rule.rule_version})` : ""}
 												</p>
 												<p className="mt-2 text-xs text-zinc-400">
 													Resultado: {rule.result} - Executado em{" "}
