@@ -1,8 +1,8 @@
-﻿import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { LiveEventUpdates } from "@/components/live-event-updates";
 import { Badge } from "@/components/ui/badge";
 import { getEvent, getEventAttempts } from "@/lib/api";
-import { LiveEventUpdates } from "@/components/live-event-updates";
 import { ReplayButton } from "./ReplayButton";
 
 const stateStyles: Record<string, { label: string; className: string }> = {
@@ -11,6 +11,23 @@ const stateStyles: Record<string, { label: string; className: string }> = {
 	processed: { label: "Processado", className: "text-accent-2" },
 	failed: { label: "Falhou", className: "text-danger" },
 };
+
+function renderError(message: string) {
+	const [summary, ...rest] = message.split("\n");
+	const details = rest.join("\n").trim();
+
+	return (
+		<div className="mt-3 text-xs">
+			<p className="font-semibold text-danger">{summary}</p>
+			{details ? (
+				<details className="mt-1 text-zinc-500">
+					<summary>Ver detalhes técnicos</summary>
+					<pre className="mt-1 whitespace-pre-wrap break-words">{details}</pre>
+				</details>
+			) : null}
+		</div>
+	);
+}
 
 export const dynamic = "force-dynamic";
 
@@ -111,11 +128,7 @@ export default async function EventDetailPage({
 										</span>
 									) : null}
 								</div>
-								{attempt.error ? (
-									<pre className="mt-3 whitespace-pre-wrap break-words text-xs text-danger">
-										{attempt.error}
-									</pre>
-								) : null}
+								{attempt.error ? renderError(attempt.error) : null}
 								{attempt.rule_executions?.length ? (
 									<div className="mt-4 space-y-3">
 										{attempt.rule_executions.map((rule) => (
@@ -129,11 +142,7 @@ export default async function EventDetailPage({
 												<p className="mt-2 text-xs text-zinc-400">
 													Resultado: {rule.result}
 												</p>
-												{rule.error ? (
-													<p className="mt-2 text-xs text-danger">
-														{rule.error}
-													</p>
-												) : null}
+												{rule.error ? renderError(rule.error) : null}
 											</div>
 										))}
 									</div>
