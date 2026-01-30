@@ -94,6 +94,63 @@ export const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const handleTimeout = async (
+	claim: ClaimedEvent,
+	timeoutError: Error,
+): Promise<void> => {
+	const client = await pool.connect();
+
+	try {
+		await client.query('BEGIN');
+
+		await client.query(
+			`
+			UPDATE event_attempts
+			SET status = 'failed',
+			    error = $1,
+			    finished_at = NOW(),
+			    duration_ms = FLOOR(EXTRACT(EPOCH FROM (NOW() - started_at)) * 1000)
+			WHERE id = $2
+			`,
+			[timeoutError.message, claim.attemptId],
+		);
+
+		await client.query(
+			`
+			UPDATE events
+			SET state = 'pending',
+			    processing_started_at = NULL
+			WHERE id = $1
+			`,
+			[claim.event.id],
+		);
+
+		await client.query('COMMIT');
+
+		workerLogger.warn(
+			{
+				eventId: claim.event.id,
+				attemptId: claim.attemptId,
+				timeoutMs: PROCESSING_TIMEOUT_MS,
+			},
+			'Event processing timed out, returned to pending for retry',
+		);
+	} catch (err) {
+		await client.query('ROLLBACK');
+		workerLogger.error(
+			{
+				error: err,
+				eventId: claim.event.id,
+				attemptId: claim.attemptId,
+			},
+			'Failed to handle timeout',
+		);
+		throw err;
+	} finally {
+		client.release();
+	}
+};
+
 export const startWorker = async () => {
 	workerLogger.info({ pollIntervalMs: POLL_INTERVAL_MS }, 'Worker started');
 
@@ -130,16 +187,32 @@ export const startWorker = async () => {
 				`Event processing (id=${claim.event.id})`,
 			);
 		} catch (err) {
-			workerLogger.error(
-				{
-					eventId: claim.event.id,
-					attemptId: claim.attemptId,
-					error: err,
-					isTimeout:
-						err instanceof Error && err.message.includes('exceeded timeout'),
-				},
-				'Unhandled worker error',
-			);
+			const isTimeout =
+				err instanceof Error && err.message.includes('exceeded timeout');
+
+			if (isTimeout) {
+				try {
+					await handleTimeout(claim, err as Error);
+				} catch (handleErr) {
+					workerLogger.error(
+						{
+							error: handleErr,
+							eventId: claim.event.id,
+							attemptId: claim.attemptId,
+						},
+						'Failed to handle timeout, event may be stuck',
+					);
+				}
+			} else {
+				workerLogger.error(
+					{
+						eventId: claim.event.id,
+						attemptId: claim.attemptId,
+						error: err,
+					},
+					'Unhandled worker error',
+				);
+			}
 		}
 	}
 
