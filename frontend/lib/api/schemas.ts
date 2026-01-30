@@ -91,6 +91,16 @@ export const replayResponseSchema = z.object({
 	warning: z.string().optional(),
 });
 
+export const createEventResponseSchema = z.object({
+	id: z.number(),
+	external_id: z.string(),
+	state: eventStateSchema,
+	created_at: z.string(),
+	received_count: z.number(),
+});
+
+export type CreateEventResponse = z.infer<typeof createEventResponseSchema>;
+
 export type Event = z.infer<typeof eventSchema>;
 export type EventState = z.infer<typeof eventStateSchema>;
 export type Attempt = z.infer<typeof attemptSchema>;

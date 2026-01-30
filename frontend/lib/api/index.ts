@@ -1,15 +1,17 @@
 import { api } from "./client";
 import {
-	attemptSchema,
-	eventSchema,
-	listResponseSchema,
-	replayResponseSchema,
-	ruleSchema,
 	type Attempt,
+	attemptSchema,
+	type CreateEventResponse,
+	createEventResponseSchema,
 	type Event,
 	type EventState,
+	eventSchema,
 	type ListResponse,
+	listResponseSchema,
 	type Rule,
+	replayResponseSchema,
+	ruleSchema,
 } from "./schemas";
 
 export const listEvents = async (params?: {
@@ -42,6 +44,15 @@ export const getEventAttempts = async (
 export const replayEvent = async (id: number) => {
 	const response = await api.post(`/events/${id}/replay`);
 	return replayResponseSchema.parse(response.data);
+};
+
+export const createEvent = async (payload: {
+	id: string;
+	type: string;
+	data: Record<string, unknown>;
+}): Promise<CreateEventResponse> => {
+	const response = await api.post("/events", payload);
+	return createEventResponseSchema.parse(response.data);
 };
 
 export const listRules = async (params?: {

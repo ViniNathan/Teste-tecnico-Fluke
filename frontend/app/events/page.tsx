@@ -1,5 +1,8 @@
-﻿import Link from "next/link";
 import { ArrowRight, Filter } from "lucide-react";
+import Link from "next/link";
+import { ConsoleNav } from "@/components/console-nav";
+import { CreateEventDialog } from "@/components/create-event-dialog";
+import { LiveEventUpdates } from "@/components/live-event-updates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +15,6 @@ import {
 } from "@/components/ui/table";
 import { listEvents } from "@/lib/api";
 import type { EventState } from "@/lib/api/schemas";
-import { LiveEventUpdates } from "@/components/live-event-updates";
 
 const stateStyles: Record<string, { label: string; className: string }> = {
 	pending: { label: "Pendente", className: "text-warning" },
@@ -40,6 +42,7 @@ export default async function EventsPage({
 		<div className="min-h-screen bg-background text-foreground">
 			<LiveEventUpdates eventIds={events.data.map((event) => event.id)} />
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 md:px-10">
+				<ConsoleNav />
 				<header className="flex flex-col gap-6 border-b border-border-subtle pb-6">
 					<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 						<div>
@@ -57,6 +60,7 @@ export default async function EventsPage({
 							</p>
 						</div>
 						<div className="flex flex-col gap-2 md:flex-row">
+							<CreateEventDialog />
 							<Button
 								variant="outline"
 								className="gap-2 border-border-subtle hover:bg-white/5"
@@ -68,7 +72,11 @@ export default async function EventsPage({
 								asChild
 								className="gap-2 border border-border-subtle bg-transparent text-foreground hover:bg-white/5"
 							>
-								<Link href={events.data[0] ? `/events/${events.data[0].id}` : "/events"}>
+								<Link
+									href={
+										events.data[0] ? `/events/${events.data[0].id}` : "/events"
+									}
+								>
 									Ver detalhes
 									<ArrowRight className="h-4 w-4" />
 								</Link>
@@ -79,13 +87,19 @@ export default async function EventsPage({
 						<div className="flex items-end justify-between border border-border-subtle p-4">
 							<span className="text-zinc-400">Pendentes</span>
 							<span className="text-warning">
-								{events.data.filter((event) => event.state === "pending").length}
+								{
+									events.data.filter((event) => event.state === "pending")
+										.length
+								}
 							</span>
 						</div>
 						<div className="flex items-end justify-between border border-border-subtle p-4">
 							<span className="text-zinc-400">Processando</span>
 							<span className="text-info">
-								{events.data.filter((event) => event.state === "processing").length}
+								{
+									events.data.filter((event) => event.state === "processing")
+										.length
+								}
 							</span>
 						</div>
 						<div className="flex items-end justify-between border border-border-subtle p-4">
@@ -144,7 +158,9 @@ export default async function EventsPage({
 											{event.type}
 										</TableCell>
 										<TableCell>
-											<Badge className={`${state.className} border border-border-subtle`}>
+											<Badge
+												className={`${state.className} border border-border-subtle`}
+											>
 												{state.label}
 											</Badge>
 										</TableCell>

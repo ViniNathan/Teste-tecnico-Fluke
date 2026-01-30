@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ConsoleNav } from "@/components/console-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,7 +58,9 @@ export default function RulesPage() {
 		setSelectedRule(rule);
 		setName(rule.name);
 		setEventType(rule.event_type);
-		setCondition(JSON.stringify(rule.current_version?.condition ?? {}, null, 2));
+		setCondition(
+			JSON.stringify(rule.current_version?.condition ?? {}, null, 2),
+		);
 		setAction(JSON.stringify(rule.current_version?.action ?? {}, null, 2));
 		setActive(rule.active);
 	};
@@ -122,6 +125,7 @@ export default function RulesPage() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12 md:px-10">
+				<ConsoleNav />
 				<header className="border-b border-border-subtle pb-6">
 					<p className="text-xs uppercase tracking-[0.3em] text-zinc-500">
 						Regras
@@ -141,7 +145,10 @@ export default function RulesPage() {
 						</p>
 						<div className="mt-4 space-y-4 text-sm text-zinc-300">
 							<div>
-								<label htmlFor="rule-name" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label
+									htmlFor="rule-name"
+									className="text-xs uppercase tracking-[0.2em] text-zinc-500"
+								>
 									Nome
 								</label>
 								<input
@@ -153,7 +160,10 @@ export default function RulesPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="rule-event-type" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label
+									htmlFor="rule-event-type"
+									className="text-xs uppercase tracking-[0.2em] text-zinc-500"
+								>
 									Tipo de evento
 								</label>
 								<input
@@ -165,7 +175,10 @@ export default function RulesPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="rule-condition" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label
+									htmlFor="rule-condition"
+									className="text-xs uppercase tracking-[0.2em] text-zinc-500"
+								>
 									Condition (JSONLogic)
 								</label>
 								<textarea
@@ -176,7 +189,10 @@ export default function RulesPage() {
 								/>
 							</div>
 							<div>
-								<label htmlFor="rule-action" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label
+									htmlFor="rule-action"
+									className="text-xs uppercase tracking-[0.2em] text-zinc-500"
+								>
 									Action (JSON)
 								</label>
 								<textarea
@@ -187,7 +203,10 @@ export default function RulesPage() {
 								/>
 							</div>
 							<div className="flex items-center gap-3">
-								<label htmlFor="rule-active" className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+								<label
+									htmlFor="rule-active"
+									className="text-xs uppercase tracking-[0.2em] text-zinc-500"
+								>
 									Ativa
 								</label>
 								<input
@@ -243,7 +262,10 @@ export default function RulesPage() {
 								</TableHeader>
 								<TableBody>
 									{rules.map((rule) => (
-										<TableRow key={rule.id} className="border-border-subtle text-sm">
+										<TableRow
+											key={rule.id}
+											className="border-border-subtle text-sm"
+										>
 											<TableCell className="font-medium text-zinc-100">
 												{rule.name}
 											</TableCell>
@@ -258,14 +280,14 @@ export default function RulesPage() {
 											<TableCell className="flex flex-col gap-2 text-zinc-300 md:flex-row">
 												<Button
 													variant="outline"
-													className="border-border-subtle"
+													className="border border-border-subtle bg-transparent text-foreground hover:bg-white/5"
 													onClick={() => fillFromRule(rule)}
 												>
 													Editar
 												</Button>
 												<Button
 													variant="outline"
-													className="border-border-subtle text-danger"
+													className="border border-border-subtle bg-transparent text-danger hover:bg-white/5"
 													onClick={() => onDeactivate(rule.id)}
 												>
 													Desativar
