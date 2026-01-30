@@ -47,10 +47,12 @@ const parseEventState = (
 export default async function EventsPage({
 	searchParams,
 }: {
-	searchParams?: PageSearchParams;
+	searchParams?: PageSearchParams | Promise<PageSearchParams>;
 }) {
+	const resolvedParams = await Promise.resolve(searchParams ?? {});
+
 	const getParam = (key: string) => {
-		const value = searchParams?.[key];
+		const value = resolvedParams?.[key];
 		return Array.isArray(value) ? value[0] : value;
 	};
 
