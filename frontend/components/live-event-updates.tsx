@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef } from "react";
 
 type LiveEventUpdatesProps = {
 	eventId?: number;
