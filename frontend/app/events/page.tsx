@@ -1,8 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { EventFilters } from "@/components/event-filters";
 import { ConsoleNav } from "@/components/console-nav";
 import { CreateEventDialog } from "@/components/create-event-dialog";
+import { EventFilters } from "@/components/event-filters";
 import { LiveEventUpdates } from "@/components/live-event-updates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -186,9 +186,7 @@ export default async function EventsPage({
 										</TableCell>
 										<TableCell className="text-zinc-300">
 											{event.processing_started_at
-												? new Date(
-														event.processing_started_at,
-													).toLocaleString()
+												? new Date(event.processing_started_at).toLocaleString()
 												: "-"}
 										</TableCell>
 										<TableCell className="text-zinc-300">
