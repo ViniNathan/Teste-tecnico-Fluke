@@ -7,6 +7,28 @@ import { processClaimedEvent } from './processor';
 const workerLogger = createLogger({ module: 'worker' });
 
 const POLL_INTERVAL_MS = Number(process.env.WORKER_POLL_INTERVAL_MS ?? '1000');
+const PROCESSING_TIMEOUT_MS = Number(
+	process.env.PROCESSING_TIMEOUT_MS ?? '60000',
+); // 60 segundos default
+
+const withTimeout = <T>(
+	promise: Promise<T>,
+	timeoutMs: number,
+	operationName: string,
+): Promise<T> => {
+	return Promise.race([
+		promise,
+		new Promise<T>((_, reject) =>
+			setTimeout(
+				() =>
+					reject(
+						new Error(`${operationName} exceeded timeout of ${timeoutMs}ms`),
+					),
+				timeoutMs,
+			),
+		),
+	]);
+};
 
 export const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 	const client = await pool.connect();
@@ -102,13 +124,19 @@ export const startWorker = async () => {
 		}
 
 		try {
-			await processClaimedEvent(claim);
+			await withTimeout(
+				processClaimedEvent(claim),
+				PROCESSING_TIMEOUT_MS,
+				`Event processing (id=${claim.event.id})`,
+			);
 		} catch (err) {
 			workerLogger.error(
 				{
 					eventId: claim.event.id,
 					attemptId: claim.attemptId,
 					error: err,
+					isTimeout:
+						err instanceof Error && err.message.includes('exceeded timeout'),
 				},
 				'Unhandled worker error',
 			);
