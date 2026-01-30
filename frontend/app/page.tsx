@@ -42,6 +42,13 @@ export default function Home() {
 								variant="outline"
 								className="border-border-subtle hover:bg-white/5"
 							>
+								<Link href="/rules">Regras</Link>
+							</Button>
+							<Button
+								asChild
+								variant="outline"
+								className="border-border-subtle hover:bg-white/5"
+							>
 								<a href="#capabilities">Capacidades</a>
 							</Button>
 						</div>
