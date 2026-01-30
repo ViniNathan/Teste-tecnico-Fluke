@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { replayEvent } from "@/lib/api";
 
@@ -35,9 +35,7 @@ export function ReplayButton({ eventId }: { eventId: number }) {
 			>
 				{loading ? "Reprocessando..." : "Reprocessar evento"}
 			</Button>
-			{message ? (
-				<p className="text-xs text-warning">{message}</p>
-			) : null}
+			{message ? <p className="text-xs text-warning">{message}</p> : null}
 			{error ? <p className="text-xs text-danger">{error}</p> : null}
 		</div>
 	);
