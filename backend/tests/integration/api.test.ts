@@ -2,6 +2,7 @@ import http from 'node:http';
 import request from 'supertest';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { createApp } from '../../src/api/server';
+import { pool } from '../../src/db/client';
 import { processClaimedEvent } from '../../src/worker/processor';
 import { claimNextEvent } from '../../src/worker/worker';
 import {
@@ -77,7 +78,96 @@ describe('API surface', () => {
 			.expect(200);
 
 		expect(attempts.body.count).toBe(1);
-		expect(attempts.body.data[0].rule_executions).toHaveLength(1);
+		const attempt = attempts.body.data[0];
+		expect(attempt.rule_executions).toHaveLength(1);
+		expect(typeof attempt.duration_ms).toBe('number');
+		expect(attempt.rule_executions[0].rule_version).toBe(1);
+	});
+
+	test('events stats returns aggregated counts and respects filters', async () => {
+		const pendingId = await insertEvent({
+			external_id: 'pending-1',
+			type: 'alpha',
+			state: 'pending',
+		});
+		expect(pendingId).toBeGreaterThan(0);
+
+		await insertEvent({
+			external_id: 'processing-1',
+			type: 'alpha',
+			state: 'processing',
+			processing_started_at: new Date(),
+		});
+
+		const failedRecent = await insertEvent({
+			external_id: 'failed-new',
+			type: 'beta',
+			state: 'failed',
+		});
+		await pool.query('UPDATE events SET processed_at = NOW() WHERE id = $1', [
+			failedRecent,
+		]);
+
+		const failedOld = await insertEvent({
+			external_id: 'failed-old',
+			type: 'beta',
+			state: 'failed',
+		});
+		await pool.query(
+			`UPDATE events 
+       SET processed_at = NOW() - INTERVAL '3 days',
+           created_at = NOW() - INTERVAL '3 days'
+       WHERE id = $1`,
+			[failedOld],
+		);
+
+		const stats = await request(app).get('/events/stats').expect(200);
+
+		expect(stats.body.total).toBe(4);
+		expect(stats.body.pending).toBe(1);
+		expect(stats.body.processing).toBe(1);
+		expect(stats.body.failed).toBe(2);
+		expect(stats.body.failed_last_24h).toBe(1);
+
+		const filtered = await request(app)
+			.get('/events/stats')
+			.query({ type: 'alpha' })
+			.expect(200);
+
+		expect(filtered.body.total).toBe(2);
+		expect(filtered.body.pending).toBe(1);
+		expect(filtered.body.processing).toBe(1);
+		expect(filtered.body.failed_last_24h).toBe(0);
+	});
+
+	test('list events supports date range filtering', async () => {
+		const recent = await insertEvent({
+			external_id: 'recent',
+			type: 'range-test',
+			state: 'pending',
+		});
+		const older = await insertEvent({
+			external_id: 'older',
+			type: 'range-test',
+			state: 'pending',
+		});
+
+		await pool.query(
+			`UPDATE events SET created_at = NOW() - INTERVAL '5 days' WHERE id = $1`,
+			[older],
+		);
+
+		const startDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+			.toISOString()
+			.slice(0, 10);
+
+		const list = await request(app)
+			.get('/events')
+			.query({ type: 'range-test', start_date: startDate })
+			.expect(200);
+
+		expect(list.body.count).toBe(1);
+		expect(list.body.data[0].id).toBe(recent);
 	});
 });
 
