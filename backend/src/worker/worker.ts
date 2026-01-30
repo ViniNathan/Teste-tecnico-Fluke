@@ -151,6 +151,12 @@ const handleTimeout = async (
 	}
 };
 
+// Expõe funções para testes de integração
+export const __testOnly = {
+	withTimeout,
+	handleTimeout,
+};
+
 export const startWorker = async () => {
 	workerLogger.info({ pollIntervalMs: POLL_INTERVAL_MS }, 'Worker started');
 
