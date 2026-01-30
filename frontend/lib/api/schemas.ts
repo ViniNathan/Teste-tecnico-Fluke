@@ -20,6 +20,15 @@ export const eventSchema = z.object({
 	processing_started_at: z.string().nullable().optional(),
 });
 
+export const eventStatsSchema = z.object({
+	total: z.number(),
+	pending: z.number(),
+	processing: z.number(),
+	processed: z.number(),
+	failed: z.number(),
+	failed_last_24h: z.number(),
+});
+
 export const listResponseSchema = <T extends z.ZodTypeAny>(item: T) =>
 	z.object({
 		data: z.array(item),
@@ -33,6 +42,7 @@ export const ruleExecutionSchema = z.object({
 	rule_id: z.number(),
 	rule_name: z.string().optional(),
 	rule_version_id: z.number(),
+	rule_version: z.number().optional(),
 	result: z.enum(["applied", "skipped", "failed", "deduped"]),
 	error: z.string().nullable(),
 	executed_at: z.string(),
@@ -102,6 +112,7 @@ export const createEventResponseSchema = z.object({
 export type CreateEventResponse = z.infer<typeof createEventResponseSchema>;
 
 export type Event = z.infer<typeof eventSchema>;
+export type EventStats = z.infer<typeof eventStatsSchema>;
 export type EventState = z.infer<typeof eventStateSchema>;
 export type Attempt = z.infer<typeof attemptSchema>;
 export type Rule = z.infer<typeof ruleSchema>;
