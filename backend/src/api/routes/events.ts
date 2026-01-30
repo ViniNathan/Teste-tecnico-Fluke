@@ -13,10 +13,10 @@ import { createLogger } from '../../utils/logger';
 const router = Router();
 const eventsLogger = createLogger({ module: 'events' });
 
-// POST /events - cria um novo evento
+// POST /events - ingere evento. Duplicatas (mesmo external_id) apenas incrementam
+// received_count; evento NÃO é reprocessado. Ver README "Comportamento com Duplicatas".
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		// Validação com Zod
 		const payload = eventCreateSchema.parse(req.body);
 
 		eventsLogger.debug({ payload }, 'Creating event');
@@ -25,11 +25,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			await client.query('BEGIN');
 
+			// ON CONFLICT: só incrementa received_count; não altera state nem payload.
+			// Duplicatas não são reprocessadas (evita reexecução de ações externas).
 			const result = await client.query(
 				`
         INSERT INTO events (external_id, type, payload, state)
         VALUES ($1, $2, $3, 'pending')
-        ON CONFLICT (external_id) 
+        ON CONFLICT (external_id)
         DO UPDATE SET received_count = events.received_count + 1
         RETURNING id, external_id, state, created_at, received_count
         `,
@@ -39,10 +41,18 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 			await client.query('COMMIT');
 
 			const event = result.rows[0];
+			const isDuplicate = event.received_count > 1;
 
 			eventsLogger.info(
-				{ eventId: event.id, receivedCount: event.received_count },
-				'Event created',
+				{
+					eventId: event.id,
+					externalId: event.external_id,
+					receivedCount: event.received_count,
+					isDuplicate,
+				},
+				isDuplicate
+					? 'Event ingested (duplicate, not reprocessed)'
+					: 'Event ingested',
 			);
 
 			res.status(201).json(event);
