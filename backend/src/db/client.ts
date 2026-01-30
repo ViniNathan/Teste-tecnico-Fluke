@@ -12,7 +12,7 @@ const pool = new Pool({
 });
 
 // Listener de erros no nível do pool
-pool.on('error', (err, client) => {
+pool.on('error', (err, _client) => {
 	console.error('Erro inesperado no cliente PostgreSQL', err);
 	if (!isTestEnv) {
 		process.exit(-1); // Fail fast
@@ -21,9 +21,9 @@ pool.on('error', (err, client) => {
 
 // Wrapper para tipagem e logs centralizados (ajuda no debug)
 export const db = {
-	query: async <T extends QueryResultRow = any>(
+	query: async <T extends QueryResultRow = QueryResultRow>(
 		text: string,
-		params?: any[],
+		params?: unknown[],
 	): Promise<QueryResult<T>> => {
 		console.log('Executando query:', { text, params });
 		return pool.query<T>(text, params);

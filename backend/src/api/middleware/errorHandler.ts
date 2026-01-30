@@ -19,7 +19,8 @@ export function errorHandler(
 	next: NextFunction,
 ): void {
 	if (res.headersSent) {
-		return next(err);
+		next(err);
+		return;
 	}
 
 	const isDevelopment = process.env.NODE_ENV !== 'production';

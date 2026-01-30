@@ -33,7 +33,7 @@ router.post(
 		try {
 			const eventId = parseInt(req.params.id as string, 10);
 
-			if (isNaN(eventId)) {
+			if (Number.isNaN(eventId)) {
 				throw new ValidationError('Invalid event ID');
 			}
 

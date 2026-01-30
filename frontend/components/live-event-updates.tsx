@@ -31,7 +31,6 @@ const parsePayload = (payload: unknown) => {
 export function LiveEventUpdates({ eventId, eventIds }: LiveEventUpdatesProps) {
 	const router = useRouter();
 	const lastRefreshRef = useRef(0);
-	const idKey = eventIds?.join(",") ?? (eventId ? String(eventId) : "all");
 	const trackedIds = useMemo(() => {
 		if (eventId !== undefined) {
 			return new Set([eventId]);
@@ -96,7 +95,7 @@ export function LiveEventUpdates({ eventId, eventIds }: LiveEventUpdatesProps) {
 			}
 			socket?.close();
 		};
-	}, [router, trackedIds, idKey]);
+	}, [router, trackedIds]);
 
 	return null;
 }

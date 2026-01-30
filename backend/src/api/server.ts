@@ -1,6 +1,6 @@
-﻿import cors from 'cors';
+import { createServer } from 'node:http';
+import cors from 'cors';
 import express, { type Express } from 'express';
-import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { pool } from '../db/client';
 import logger from '../utils/logger';
@@ -36,7 +36,7 @@ function createApp(): Express {
 	app.use(express.urlencoded({ extended: true }));
 
 	// 4. Health check (antes das rotas principais)
-	app.get('/health', (req, res) => {
+	app.get('/health', (_req, res) => {
 		res.json({ status: 'ok', timestamp: new Date().toISOString() });
 	});
 

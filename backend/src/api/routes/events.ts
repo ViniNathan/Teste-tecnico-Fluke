@@ -62,7 +62,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const eventId = parseInt(req.params.id as string, 10);
 
-		if (isNaN(eventId)) {
+		if (Number.isNaN(eventId)) {
 			throw new ValidationError('Invalid event ID');
 		}
 
@@ -86,7 +86,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 		const { state, type, limit = '50', offset = '0' } = req.query;
 
 		let query = 'SELECT * FROM events WHERE 1=1';
-		const params: any[] = [];
+		const params: (string | number | boolean)[] = [];
 		let paramIndex = 1;
 
 		if (state) {
@@ -104,7 +104,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
 		const result = await pool.query(query, params);
 
-		const response: ListResponse<any> = {
+		const response: ListResponse<Record<string, unknown>> = {
 			data: result.rows,
 			count: result.rows.length,
 			limit: parseInt(limit as string, 10),
@@ -124,7 +124,7 @@ router.get(
 		try {
 			const eventId = parseInt(req.params.id as string, 10);
 
-			if (isNaN(eventId)) {
+			if (Number.isNaN(eventId)) {
 				throw new ValidationError('Invalid event ID');
 			}
 
@@ -156,7 +156,7 @@ router.get(
 				[eventId],
 			);
 
-			const response: ListResponse<any> = {
+			const response: ListResponse<Record<string, unknown>> = {
 				data: result.rows,
 				count: result.rows.length,
 				limit: result.rows.length,

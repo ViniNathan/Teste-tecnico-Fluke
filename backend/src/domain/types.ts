@@ -23,7 +23,7 @@ export interface Event {
 	id: number;
 	external_id: string;
 	type: string;
-	payload: Record<string, any>;
+	payload: Record<string, JsonValue>;
 	state: EventState;
 	received_count: number;
 	created_at: Date;
@@ -36,7 +36,7 @@ export interface Event {
 export interface EventCreatePayload {
 	id: string; // ID externo
 	type: string; // Tipo do evento (ex: 'order.created')
-	data: Record<string, any>; // Payload JSON arbitrário
+	data: Record<string, JsonValue>; // Payload JSON arbitrário
 }
 
 // Evento com histórico de tentativas
@@ -120,7 +120,7 @@ export interface RuleUpdatePayload {
 // Interface base para ações
 export interface BaseAction {
 	type: string;
-	params: Record<string, any>;
+	params: Record<string, JsonValue>;
 }
 
 // Ação de Enviar Email
@@ -131,7 +131,7 @@ export interface SendEmailAction extends BaseAction {
 		to: string; // Destinatário
 		subject: string; // Assuntos
 		template: string; // Template ID
-		data?: Record<string, any>; // Variáveis do template
+		data?: Record<string, JsonValue>; // Variáveis do template
 	};
 }
 
@@ -143,7 +143,7 @@ export interface CallWebhookAction extends BaseAction {
 		url: string;
 		method: 'POST' | 'PUT' | 'PATCH';
 		headers?: Record<string, string>;
-		body?: Record<string, any>;
+		body?: JsonValue;
 	};
 }
 

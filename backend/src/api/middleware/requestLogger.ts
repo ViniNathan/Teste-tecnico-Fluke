@@ -27,7 +27,10 @@ export function requestLoggingMiddleware(
 	// Intercept res.end to log response
 	const originalEnd = res.end.bind(res);
 
-	res.end = function (this: Response, ...args: any[]): Response {
+	const loggingEnd: Response['end'] = function (
+		this: Response,
+		...args: Parameters<Response['end']>
+	): Response {
 		const duration = Date.now() - startTime;
 
 		httpLogger.info(
@@ -41,7 +44,9 @@ export function requestLoggingMiddleware(
 		);
 
 		return originalEnd(...args);
-	} as any;
+	};
+
+	res.end = loggingEnd;
 
 	next();
 }

@@ -15,19 +15,19 @@
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface-1: var(--surface-1);
-  --color-surface-2: var(--surface-2);
-  --color-surface-3: var(--surface-3);
-  --color-border-subtle: var(--border-subtle);
-  --color-accent: var(--accent);
-  --color-accent-2: var(--accent-2);
-  --color-danger: var(--danger);
-  --color-warning: var(--warning);
-  --color-info: var(--info);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-surface-1: var(--surface-1);
+	--color-surface-2: var(--surface-2);
+	--color-surface-3: var(--surface-3);
+	--color-border-subtle: var(--border-subtle);
+	--color-accent: var(--accent);
+	--color-accent-2: var(--accent-2);
+	--color-danger: var(--danger);
+	--color-warning: var(--warning);
+	--color-info: var(--info);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
 }
 
 body {

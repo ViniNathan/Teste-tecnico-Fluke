@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { validateJsonLogicCondition } from './jsonLogic';
-import type { JsonValue } from './types';
+import type { JsonLogicExpression, JsonValue } from './types';
 
 const MAX_JSON_DEPTH = 20;
 
@@ -63,7 +63,7 @@ const jsonLogicSchema = z
 		},
 	)
 	.superRefine((value, ctx) => {
-		const validation = validateJsonLogicCondition(value as any);
+		const validation = validateJsonLogicCondition(value as JsonLogicExpression);
 		if (!validation.ok) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,

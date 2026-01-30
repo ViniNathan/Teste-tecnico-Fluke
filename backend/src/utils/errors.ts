@@ -14,7 +14,7 @@ export class AppError extends Error {
 export class ValidationError extends AppError {
 	constructor(
 		message: string,
-		public details?: any,
+		public details?: unknown,
 	) {
 		super(400, message);
 	}

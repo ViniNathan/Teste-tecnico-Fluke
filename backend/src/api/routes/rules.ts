@@ -117,7 +117,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       WHERE 1=1
     `;
 
-		const params: any[] = [];
+		const params: (string | number | boolean)[] = [];
 		let paramIndex = 1;
 
 		if (active !== undefined) {
@@ -153,7 +153,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 				: null,
 		}));
 
-		const response: ListResponse<any> = {
+		const response: ListResponse<Record<string, unknown>> = {
 			data: rules,
 			count: rules.length,
 			limit: parseInt(limit as string, 10),
@@ -171,7 +171,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const ruleId = parseInt(req.params.id as string, 10);
 
-		if (isNaN(ruleId)) {
+		if (Number.isNaN(ruleId)) {
 			throw new ValidationError('Invalid rule ID');
 		}
 
@@ -226,7 +226,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const ruleId = parseInt(req.params.id as string, 10);
 
-		if (isNaN(ruleId)) {
+		if (Number.isNaN(ruleId)) {
 			throw new ValidationError('Invalid rule ID');
 		}
 
@@ -252,7 +252,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 
 			// 2. Atualiza os metadados (name, event_type, active)
 			const updates: string[] = [];
-			const params: any[] = [];
+			const params: (string | number | boolean)[] = [];
 			let paramIndex = 1;
 
 			if (payload.name !== undefined) {
@@ -379,7 +379,7 @@ router.delete(
 		try {
 			const ruleId = parseInt(req.params.id as string, 10);
 
-			if (isNaN(ruleId)) {
+			if (Number.isNaN(ruleId)) {
 				throw new ValidationError('Invalid rule ID');
 			}
 
@@ -416,7 +416,7 @@ router.get(
 		try {
 			const ruleId = parseInt(req.params.id as string, 10);
 
-			if (isNaN(ruleId)) {
+			if (Number.isNaN(ruleId)) {
 				throw new ValidationError('Invalid rule ID');
 			}
 

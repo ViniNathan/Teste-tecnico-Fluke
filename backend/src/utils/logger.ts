@@ -47,14 +47,14 @@ if (isTest) {
 }
 
 // Cria um logger filho com contexto específico
-export function createLogger(context: Record<string, any>) {
+export function createLogger(context: Record<string, unknown>) {
 	return logger.child(context);
 }
 
 // Loga um erro com stack trace completo
 export function logError(
 	error: Error | unknown,
-	context?: Record<string, any>,
+	context?: Record<string, unknown>,
 ) {
 	const errorContext = {
 		...context,
@@ -69,7 +69,10 @@ export function logError(
 }
 
 // Loga uma requisição HTTP
-export function logRequest(req: any, context?: Record<string, any>) {
+export function logRequest(
+	req: { method: string; url: string; headers: Record<string, unknown> },
+	context?: Record<string, unknown>,
+) {
 	logger.info(
 		{
 			method: req.method,
@@ -81,7 +84,11 @@ export function logRequest(req: any, context?: Record<string, any>) {
 	);
 }
 
-export function logResponse(req: any, res: any, context?: Record<string, any>) {
+export function logResponse(
+	req: { method: string; url: string },
+	res: { statusCode: number; get(header: string): string | number | undefined },
+	context?: Record<string, unknown>,
+) {
 	logger.info(
 		{
 			method: req.method,
@@ -95,7 +102,9 @@ export function logResponse(req: any, res: any, context?: Record<string, any>) {
 }
 
 // Sanitiza os headers sensíveis antes de logar
-function sanitizeHeaders(headers: Record<string, any>): Record<string, any> {
+function sanitizeHeaders(
+	headers: Record<string, unknown>,
+): Record<string, unknown> {
 	const sanitized = { ...headers };
 	const sensitiveKeys = ['authorization', 'cookie', 'x-api-key'];
 

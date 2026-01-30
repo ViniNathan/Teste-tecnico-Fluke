@@ -7,7 +7,7 @@ const WEBHOOK_TIMEOUT_MS = Number(process.env.WEBHOOK_TIMEOUT_MS ?? '5000');
 
 const EMAIL_MODE = (process.env.EMAIL_MODE ?? 'disabled').toLowerCase();
 
-const callWebhook = async (action: Action, logger: typeof actionsLogger) => {
+const callWebhook = async (action: Action, _logger: typeof actionsLogger) => {
 	if (action.type !== 'call_webhook') {
 		return;
 	}
