@@ -169,7 +169,7 @@ export function CreateEventDialog() {
 						<Button
 							type="button"
 							variant="outline"
-							className="border-border-subtle"
+							className="border-border-subtle bg-transparent text-foreground hover:bg-white/5"
 							onClick={() => setOpen(false)}
 							disabled={submitting}
 						>
