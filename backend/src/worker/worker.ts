@@ -1,14 +1,14 @@
-import { pool } from "../db/client";
-import type { Event } from "../domain/types";
-import type { ClaimedEvent } from "../types/worker";
-import { createLogger } from "../utils/logger";
-import { processClaimedEvent } from "./processor";
+import { pool } from '../db/client';
+import type { Event } from '../domain/types';
+import type { ClaimedEvent } from '../types/worker';
+import { createLogger } from '../utils/logger';
+import { processClaimedEvent } from './processor';
 
-const workerLogger = createLogger({ module: "worker" });
+const workerLogger = createLogger({ module: 'worker' });
 
-const POLL_INTERVAL_MS = Number(process.env.WORKER_POLL_INTERVAL_MS ?? "1000");
+const POLL_INTERVAL_MS = Number(process.env.WORKER_POLL_INTERVAL_MS ?? '1000');
 const PROCESSING_TIMEOUT_MS = Number(
-	process.env.PROCESSING_TIMEOUT_MS ?? "60000",
+	process.env.PROCESSING_TIMEOUT_MS ?? '60000',
 ); // 60 segundos default
 
 const withTimeout = <T>(
@@ -34,7 +34,7 @@ export const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 	const client = await pool.connect();
 
 	try {
-		await client.query("BEGIN");
+		await client.query('BEGIN');
 
 		const candidate = await client.query<{ id: number }>(
 			`
@@ -48,7 +48,7 @@ export const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 		);
 
 		if (candidate.rows.length === 0) {
-			await client.query("COMMIT");
+			await client.query('COMMIT');
 			return null;
 		}
 
@@ -78,14 +78,14 @@ export const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 
 		const attemptId = attempt.rows[0].id;
 
-		await client.query("COMMIT");
+		await client.query('COMMIT');
 
 		return {
 			event,
 			attemptId,
 		};
 	} catch (err) {
-		await client.query("ROLLBACK");
+		await client.query('ROLLBACK');
 		throw err;
 	} finally {
 		client.release();
@@ -95,17 +95,17 @@ export const claimNextEvent = async (): Promise<ClaimedEvent | null> => {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const startWorker = async () => {
-	workerLogger.info({ pollIntervalMs: POLL_INTERVAL_MS }, "Worker started");
+	workerLogger.info({ pollIntervalMs: POLL_INTERVAL_MS }, 'Worker started');
 
 	let running = true;
 
 	const shutdown = (signal: string) => {
-		workerLogger.info({ signal }, "Worker shutdown requested");
+		workerLogger.info({ signal }, 'Worker shutdown requested');
 		running = false;
 	};
 
-	process.on("SIGTERM", () => shutdown("SIGTERM"));
-	process.on("SIGINT", () => shutdown("SIGINT"));
+	process.on('SIGTERM', () => shutdown('SIGTERM'));
+	process.on('SIGINT', () => shutdown('SIGINT'));
 
 	while (running) {
 		let claim: ClaimedEvent | null = null;
@@ -113,7 +113,7 @@ export const startWorker = async () => {
 		try {
 			claim = await claimNextEvent();
 		} catch (err) {
-			workerLogger.error({ error: err }, "Failed to claim event");
+			workerLogger.error({ error: err }, 'Failed to claim event');
 			await sleep(POLL_INTERVAL_MS);
 			continue;
 		}
@@ -136,12 +136,12 @@ export const startWorker = async () => {
 					attemptId: claim.attemptId,
 					error: err,
 					isTimeout:
-						err instanceof Error && err.message.includes("exceeded timeout"),
+						err instanceof Error && err.message.includes('exceeded timeout'),
 				},
-				"Unhandled worker error",
+				'Unhandled worker error',
 			);
 		}
 	}
 
-	workerLogger.info("Worker stopped");
+	workerLogger.info('Worker stopped');
 };
