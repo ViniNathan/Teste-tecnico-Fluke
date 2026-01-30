@@ -193,6 +193,7 @@ describe('Backend integration flows', () => {
 
 		const claim = await claimNextEvent();
 		expect(claim?.event.id).toBe(eventRes.body.id);
+		if (!claim) throw new Error('Claim not found');
 
 		const { withTimeout, handleTimeout } = __testOnly;
 
@@ -203,21 +204,23 @@ describe('Backend integration flows', () => {
 					// Nunca resolve
 				}),
 				50,
-				`Event processing (id=${claim!.event.id})`,
+				`Event processing (id=${claim.event.id})`,
 			);
 		} catch (err) {
 			timeoutError = err as Error;
 		}
 
 		expect(timeoutError).toBeTruthy();
+		if (!timeoutError) throw new Error('Timeout error expected');
 
-		await handleTimeout(claim!, timeoutError!);
+		await handleTimeout(claim, timeoutError);
 
-		const event = await getEventById(claim!.event.id);
+		const event = await getEventById(claim.event.id);
 		expect(event?.state).toBe('pending');
 		expect(event?.processing_started_at).toBeNull();
 
-		const attempts = await getAttemptsByEventId(claim!.event.id);
+		const attempts = await getAttemptsByEventId(claim.event.id);
+
 		expect(attempts).toHaveLength(1);
 		expect(attempts[0].status).toBe('failed');
 		expect(attempts[0].error).toContain('exceeded timeout');

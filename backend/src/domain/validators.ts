@@ -91,6 +91,18 @@ export const eventStateSchema = z.enum([
 export const eventFiltersSchema = z.object({
 	state: eventStateSchema.optional(),
 	type: z.string().optional(),
+	start_date: z
+		.string()
+		.refine((value) => !Number.isNaN(Date.parse(value)), {
+			message: 'Invalid start_date, expected ISO date (YYYY-MM-DD) or datetime',
+		})
+		.optional(),
+	end_date: z
+		.string()
+		.refine((value) => !Number.isNaN(Date.parse(value)), {
+			message: 'Invalid end_date, expected ISO date (YYYY-MM-DD) or datetime',
+		})
+		.optional(),
 	limit: z.string().regex(/^\d+$/).optional(),
 	offset: z.string().regex(/^\d+$/).optional(),
 });

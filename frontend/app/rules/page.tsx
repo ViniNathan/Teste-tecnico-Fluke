@@ -226,7 +226,7 @@ export default function RulesPage() {
 								</Button>
 								<Button
 									variant="outline"
-									className="border-border-subtle"
+									className="border-border-subtle bg-transparent text-foreground hover:bg-white/5"
 									onClick={resetForm}
 								>
 									Limpar

@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { LiveEventUpdates } from "@/components/live-event-updates";
 import { Badge } from "@/components/ui/badge";
 import { getEvent, getEventAttempts } from "@/lib/api";
@@ -12,6 +13,14 @@ const stateStyles: Record<string, { label: string; className: string }> = {
 	failed: { label: "Falhou", className: "text-danger" },
 };
 
+const formatDate = (value?: string | null) =>
+	value ? new Date(value).toLocaleString() : "-";
+
+const formatDuration = (value?: number | null) => {
+	if (value === null || value === undefined) return "em execucao";
+	return `${value}ms`;
+};
+
 function renderError(message: string) {
 	const [summary, ...rest] = message.split("\n");
 	const details = rest.join("\n").trim();
@@ -21,7 +30,7 @@ function renderError(message: string) {
 			<p className="font-semibold text-danger">{summary}</p>
 			{details ? (
 				<details className="mt-1 text-zinc-500">
-					<summary>Ver detalhes técnicos</summary>
+					<summary>Ver detalhes tecnicos</summary>
 					<pre className="mt-1 whitespace-pre-wrap break-words">{details}</pre>
 				</details>
 			) : null}
@@ -34,11 +43,21 @@ export const dynamic = "force-dynamic";
 export default async function EventDetailPage({
 	params,
 }: {
-	params: Promise<{ id: string }>;
+	params: { id: string } | Promise<{ id: string }>;
 }) {
-	const resolvedParams = await params;
-	const eventId = Number(resolvedParams.id);
-	const event = await getEvent(eventId);
+	const resolved = await Promise.resolve(params);
+	const eventId = Number(resolved.id);
+	if (!Number.isFinite(eventId) || eventId <= 0) {
+		notFound();
+	}
+
+	let event;
+	try {
+		event = await getEvent(eventId);
+	} catch {
+		notFound();
+	}
+
 	const attempts = await getEventAttempts(eventId);
 	const state = stateStyles[event.state];
 
@@ -71,15 +90,18 @@ export default async function EventDetailPage({
 							{state.label}
 						</Badge>
 						<span>Recebido: {event.received_count}x</span>
-						<span>Criação: {new Date(event.created_at).toLocaleString()}</span>
-						{event.processed_at ? (
+						<span>Criacao: {formatDate(event.created_at)}</span>
+						{event.processing_started_at ? (
 							<span>
-								Processado: {new Date(event.processed_at).toLocaleString()}
+								Processando desde: {formatDate(event.processing_started_at)}
 							</span>
+						) : null}
+						{event.processed_at ? (
+							<span>Processado: {formatDate(event.processed_at)}</span>
 						) : null}
 						{event.replayed_at ? (
 							<span className="text-warning">
-								Replay em {new Date(event.replayed_at).toLocaleString()}
+								Replay em {formatDate(event.replayed_at)}
 							</span>
 						) : null}
 					</div>
@@ -100,8 +122,8 @@ export default async function EventDetailPage({
 						</p>
 						<ul className="mt-4 space-y-3 text-sm text-zinc-400">
 							<li>Replay usa regras atuais e pode alterar resultados.</li>
-							<li>Ações externas podem ser executadas mais de uma vez.</li>
-							<li>Estados refletem a última tentativa concluída.</li>
+							<li>Acoes externas podem ser executadas mais de uma vez.</li>
+							<li>Estados refletem a ultima tentativa concluida.</li>
 						</ul>
 					</div>
 				</section>
@@ -115,18 +137,24 @@ export default async function EventDetailPage({
 					<div className="divide-y divide-border-subtle">
 						{attempts.data.map((attempt) => (
 							<div key={attempt.id} className="p-5 text-sm text-zinc-300">
-								<div className="flex flex-wrap items-center gap-3">
+								<div className="flex flex-wrap items-center gap-2">
 									<span className="font-medium text-zinc-100">
 										Tentativa #{attempt.id}
 									</span>
-									<span className="text-zinc-500">
+									<Badge className="border border-border-subtle text-[11px]">
 										Status: {attempt.status ?? "executando"}
-									</span>
-									{attempt.duration_ms ? (
-										<span className="text-zinc-500">
-											Duração: {attempt.duration_ms}ms
-										</span>
+									</Badge>
+									<Badge className="border border-border-subtle text-[11px]">
+										Inicio: {formatDate(attempt.started_at)}
+									</Badge>
+									{attempt.finished_at ? (
+										<Badge className="border border-border-subtle text-[11px]">
+											Fim: {formatDate(attempt.finished_at)}
+										</Badge>
 									) : null}
+									<Badge className="border border-border-subtle text-[11px]">
+										Duracao: {formatDuration(attempt.duration_ms)}
+									</Badge>
 								</div>
 								{attempt.error ? renderError(attempt.error) : null}
 								{attempt.rule_executions?.length ? (
@@ -137,10 +165,12 @@ export default async function EventDetailPage({
 												className="border border-border-subtle p-3"
 											>
 												<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-													{rule.rule_name ?? `Regra ${rule.rule_id}`}
+													{rule.rule_name ?? `Regra ${rule.rule_id}`}{" "}
+													{rule.rule_version ? `(v${rule.rule_version})` : ""}
 												</p>
 												<p className="mt-2 text-xs text-zinc-400">
-													Resultado: {rule.result}
+													Resultado: {rule.result} - Executado em{" "}
+													{formatDate(rule.executed_at)}
 												</p>
 												{rule.error ? renderError(rule.error) : null}
 											</div>

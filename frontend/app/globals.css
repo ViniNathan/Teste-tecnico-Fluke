@@ -35,8 +35,14 @@ body {
 	color: var(--foreground);
 	font-family: var(--font-sans);
 	letter-spacing: -0.01em;
+	color-scheme: dark;
 }
 
 * {
 	border-color: var(--border-subtle);
+}
+
+select option {
+	background-color: var(--surface-2);
+	color: var(--foreground);
 }

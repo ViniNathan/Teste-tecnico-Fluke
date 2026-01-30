@@ -206,6 +206,8 @@ export interface RuleExecutionWithDetails extends RuleExecution {
 export interface EventFilters {
 	state?: EventState;
 	type?: string;
+	start_date?: string;
+	end_date?: string;
 	limit?: number;
 	offset?: number;
 }
@@ -228,6 +230,7 @@ export interface EventStatistics {
 	processed: number;
 	failed: number;
 	success_rate: number; // porcentagem
+	failed_last_24h?: number;
 }
 
 // Métricas de performance
