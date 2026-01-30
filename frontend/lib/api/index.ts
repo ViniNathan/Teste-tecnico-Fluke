@@ -5,8 +5,10 @@ import {
 	type CreateEventResponse,
 	createEventResponseSchema,
 	type Event,
+	type EventStats,
 	type EventState,
 	eventSchema,
+	eventStatsSchema,
 	type ListResponse,
 	listResponseSchema,
 	type Rule,
@@ -17,11 +19,23 @@ import {
 export const listEvents = async (params?: {
 	state?: EventState;
 	type?: string;
+	start_date?: string;
+	end_date?: string;
 	limit?: number;
 	offset?: number;
 }): Promise<ListResponse<Event>> => {
 	const response = await api.get("/events", { params });
 	return listResponseSchema(eventSchema).parse(response.data);
+};
+
+export const getEventStats = async (params?: {
+	state?: EventState;
+	type?: string;
+	start_date?: string;
+	end_date?: string;
+}): Promise<EventStats> => {
+	const response = await api.get("/events/stats", { params });
+	return eventStatsSchema.parse(response.data);
 };
 
 export const getEvent = async (id: number): Promise<Event> => {
