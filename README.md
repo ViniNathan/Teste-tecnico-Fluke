@@ -31,6 +31,13 @@ Este sistema processa eventos externos de forma assíncrona, aplicando regras di
 - **Frontend**: Next.js 16 | React 19 | TypeScript | Tailwind CSS | Radix UI
 - **Infraestrutura**: Docker | node-pg-migrate
 
+### 🚀 Deploy
+
+| Serviço | URL |
+|---------|-----|
+| **Frontend** | [https://teste-tecnico-fluke.vercel.app](https://teste-tecnico-fluke.vercel.app) |
+| **API Docs (Swagger)** | [https://teste-tecnico-fluke-production.up.railway.app/api-docs](https://teste-tecnico-fluke-production.up.railway.app/api-docs) |
+
 ---
 
 ### Componentes
