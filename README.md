@@ -313,7 +313,7 @@ Acesse o console: **http://localhost:3001/events**
 - ✅ Dashboard de monitoramento incluso
 - ✅ Dead letter queue nativo
 
-**Por que decidimos não usar**:
+**Por que decidi não usar**:
 
 | Critério | Com Redis/BullMQ | Sem (atual) |
 |----------|------------------|-------------|
@@ -332,7 +332,7 @@ Acesse o console: **http://localhost:3001/events**
 
 **Trade-off aceito**: Maior latência (~1s) e menor throughput (~100-500 eventos/s) em troca de simplicidade arquitetural e consistência forte.
 
-**Quando adicionaríamos Redis**: Se throughput precisasse ultrapassar ~1000 eventos/segundo ou se latência sub-100ms fosse requisito.
+**Quando adicionaria Redis**: Se throughput precisasse ultrapassar ~1000 eventos/segundo ou se latência sub-100ms fosse requisito.
 
 ---
 
