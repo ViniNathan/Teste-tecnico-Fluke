@@ -34,37 +34,6 @@ Este sistema processa eventos externos de forma assíncrona, aplicando regras di
 
 ---
 
-## Arquitetura
-
-```mermaid
-flowchart TB
-    Client[Cliente HTTP]
-    API[API Server :3000]
-    DB[(PostgreSQL)]
-    Worker[Worker Process]
-    Frontend[Next.js Frontend :3001]
-    WS[WebSocket /ws]
-
-    Client -->|POST /events| API
-    API -->|1. INSERT event| DB
-    API -->|2. NOTIFY| WS
-    WS -->|Real-time updates| Frontend
-    
-    Worker -->|3. Claim pending event\nFOR UPDATE SKIP LOCKED| DB
-    Worker -->|4. Load active rules| DB
-    Worker -->|5. Evaluate JSONLogic| Worker
-    Worker -->|6. Execute actions\nlog, webhook, email| Worker
-    Worker -->|7. Record result| DB
-    Worker -->|8. COMMIT + NOTIFY| DB
-    
-    Frontend -->|GET /events, /rules| API
-    Frontend -->|POST /events/:id/replay| API
-    
-    style DB fill:#2d3748
-    style Worker fill:#2b6cb0
-    style API fill:#2c7a7b
-```
-
 ### Componentes
 
 1. **API Server** (`backend/src/api/server.ts`):
