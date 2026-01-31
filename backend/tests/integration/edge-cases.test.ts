@@ -127,7 +127,10 @@ describe('Critical Edge Cases', () => {
 				name: 'versioned webhook',
 				event_type: 'versioned',
 				condition: { '==': [1, 1] },
-				action: { type: 'send_email', params: { to: 'v1@test.com', subject: 'v1', template: 'tpl' } },
+				action: {
+					type: 'send_email',
+					params: { to: 'v1@test.com', subject: 'v1', template: 'tpl' },
+				},
 			});
 
 			const evt = await ingestEvent({
@@ -147,7 +150,10 @@ describe('Critical Edge Cases', () => {
 			await request(app)
 				.put(`/rules/${rule.body.id}`)
 				.send({
-					action: { type: 'send_email', params: { to: 'v2@test.com', subject: 'v2', template: 'tpl' } },
+					action: {
+						type: 'send_email',
+						params: { to: 'v2@test.com', subject: 'v2', template: 'tpl' },
+					},
 				})
 				.expect(200);
 
@@ -168,7 +174,10 @@ describe('Critical Edge Cases', () => {
 				name: 'webhook no change',
 				event_type: 'nochange',
 				condition: { '==': [1, 1] },
-				action: { type: 'send_email', params: { to: 'test@example.com', subject: 'hi', template: 'tpl' } },
+				action: {
+					type: 'send_email',
+					params: { to: 'test@example.com', subject: 'hi', template: 'tpl' },
+				},
 			});
 
 			const evt = await ingestEvent({
@@ -277,7 +286,10 @@ describe('Critical Edge Cases', () => {
 				name: 'skipped rule',
 				event_type: 'conditional',
 				condition: { '>': [{ var: 'amount' }, 100] },
-				action: { type: 'log', params: { level: 'info', message: 'should_not_run' } },
+				action: {
+					type: 'log',
+					params: { level: 'info', message: 'should_not_run' },
+				},
 			});
 
 			const evt = await ingestEvent({
@@ -306,7 +318,10 @@ describe('Critical Edge Cases', () => {
 						{ '!': [{ var: 'is_blocked' }] },
 					],
 				},
-				action: { type: 'log', params: { level: 'info', message: 'all_passed' } },
+				action: {
+					type: 'log',
+					params: { level: 'info', message: 'all_passed' },
+				},
 			});
 
 			const evt = await ingestEvent({

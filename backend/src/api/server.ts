@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import cors from 'cors';
 import express, { type Express } from 'express';
+import swaggerUi from 'swagger-ui-express';
 import { WebSocketServer } from 'ws';
 import { pool } from '../db/client';
 import logger from '../utils/logger';
@@ -9,6 +10,7 @@ import { requestLoggingMiddleware } from './middleware/requestLogger';
 import { eventsRouter } from './routes/events';
 import { replayRouter } from './routes/replay';
 import { rulesRouter } from './routes/rules';
+import { swaggerSpec } from './swagger/config';
 
 // Cria e configura o app Express
 function createApp(): Express {
@@ -38,6 +40,12 @@ function createApp(): Express {
 	// 4. Health check (antes das rotas principais)
 	app.get('/health', (_req, res) => {
 		res.json({ status: 'ok', timestamp: new Date().toISOString() });
+	});
+
+	// 5. Swagger UI - Documentação da API
+	app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+	app.get('/api-docs.json', (_req, res) => {
+		res.json(swaggerSpec);
 	});
 
 	// ROTAS
