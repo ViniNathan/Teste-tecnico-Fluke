@@ -9,7 +9,6 @@ Uma plataforma mínima de processamento de eventos assíncronos com regras dinâ
 ## 📋 Índice
 
 - [Visão Geral](#visão-geral)
-- [Arquitetura](#arquitetura)
 - [Instalação e Execução](#instalação-e-execução)
 - [Funcionalidades](#funcionalidades)
 - [Decisões Técnicas e Trade-offs](#decisões-técnicas-e-trade-offs)
