@@ -4,6 +4,8 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"start": "tsx src/api/server.ts",
+		"start:worker": "tsx src/worker/runner.ts",
 		"dev": "tsx watch src/api/server.ts",
 		"worker": "tsx src/worker/runner.ts",
 		"db:create": "node-pg-migrate --migrations-dir src/db/migrations create",
