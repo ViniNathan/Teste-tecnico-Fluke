@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"start": "tsx src/api/server.ts",
+		"start": "npm run db:up && tsx src/api/server.ts",
 		"start:worker": "tsx src/worker/runner.ts",
 		"dev": "tsx watch src/api/server.ts",
 		"worker": "tsx src/worker/runner.ts",
