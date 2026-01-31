@@ -303,7 +303,40 @@ Acesse o console: **http://localhost:3001/events**
 
 ---
 
-### 2. Deduplicação por `external_id`
+### 2. Por que não Redis/BullMQ?
+
+**Análise feita**: Avaliei usar Redis + BullMQ como job queue, mas optei por manter PostgreSQL com polling.
+
+**O que Redis/BullMQ ofereceria**:
+- ✅ Latência menor (push-based ~ms vs polling ~1s)
+- ✅ Retry automático com backoff
+- ✅ Dashboard de monitoramento incluso
+- ✅ Dead letter queue nativo
+
+**Por que decidimos não usar**:
+
+| Critério | Com Redis/BullMQ | Sem (atual) |
+|----------|------------------|-------------|
+| **Infraestrutura** | +1 serviço (Redis) | Apenas Postgres |
+| **Consistência** | Eventual (Redis pode perder dados) | ACID |
+| **Transações** | Evento em Redis, estado em PG (2 sistemas) | Tudo em um banco |
+| **Complexidade** | Maior | Menor |
+| **Pontos de falha** | +1 | Apenas Postgres |
+
+**Decisão consciente**:
+
+1. **Polling com `FOR UPDATE SKIP LOCKED`** já fornece concorrência safe
+2. **Latência de ~1s é aceitável** para este caso de uso (não é real-time crítico)
+3. **Um único banco de dados** = consistência transacional garantida
+4. **Menos dependências** = deployment mais simples e menos pontos de falha
+
+**Trade-off aceito**: Maior latência (~1s) e menor throughput (~100-500 eventos/s) em troca de simplicidade arquitetural e consistência forte.
+
+**Quando adicionaríamos Redis**: Se throughput precisasse ultrapassar ~1000 eventos/segundo ou se latência sub-100ms fosse requisito.
+
+---
+
+### 3. Deduplicação por `external_id`
 
 **Escolha**: Constraint UNIQUE em `external_id`
 
@@ -319,7 +352,7 @@ Acesse o console: **http://localhost:3001/events**
 
 ---
 
-### 3. Replay com Regras Atuais (não versionadas)
+### 4. Replay com Regras Atuais (não versionadas)
 
 **Escolha**: Replay usa `current_version_id` das regras
 
@@ -335,7 +368,7 @@ Acesse o console: **http://localhost:3001/events**
 
 ---
 
-### 4. Deduplicação de Ações Não-Idempotentes
+### 5. Deduplicação de Ações Não-Idempotentes
 
 **Escolha**: Query `rule_executions` para verificar se ação já foi aplicada
 
@@ -351,7 +384,7 @@ Acesse o console: **http://localhost:3001/events**
 
 ---
 
-### 5. Worker Single-Threaded
+### 6. Worker Single-Threaded
 
 **Escolha**: Um worker processa um evento por vez
 
